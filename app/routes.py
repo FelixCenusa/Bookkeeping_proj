@@ -267,7 +267,7 @@ FAQ_ITEMS = [
         "answer": (
             "Du väljer först datum för uthyrningen, ser vilka artiklar som är "
             "tillgängliga och skickar sedan in din bokning. När bokningen är "
-            "skapad reserveras lagret medan bokningen är väntande på bekräftelse."
+            "skapad reserveras lagret en begränsad tid medan bokningen väntar på bekräftelse."
         ),
     },
     {
