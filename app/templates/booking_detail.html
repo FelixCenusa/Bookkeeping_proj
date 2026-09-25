@@ -441,7 +441,7 @@
       {% if sk_status == 'confirmed' %}
         Bokningen är bekräftad. Här ser du vad som ingår och vad det kostar.
       {% elif sk_status == 'pending' %}
-        Det du valt är reserverat medan vi går igenom bokningen. Vi hör av oss när den är bekräftad.
+        Vi håller det du valt en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.
       {% else %}
         Bokningen är avbokad.
       {% endif %}
@@ -510,22 +510,15 @@
             <p class="sk-note sk-note--orange mt-5">Bokningen har ett överenskommet totalpris, så hyra, montering och leverans avgör inte slutpriset.</p>
           {% endif %}
 
-          {% set tent_items = items | selectattr('is_tent') | list %}
-          {% if tent_items %}
+          {% set manual_tents = items | selectattr('is_tent') | selectattr('has_manual_pdf') | unique(attribute='item_id') | list %}
+          {% if manual_tents %}
             <div class="sk-manuals">
               <h3 class="sk-h3">Tältmanualer</h3>
               <ul class="sk-manuals__list" role="list">
-                {% for it in tent_items %}
+                {% for it in manual_tents %}
                   <li>
-                    <div class="min-w-0">
-                      <div class="font-bold">{{ it.display_name }}</div>
-                      <div class="sk-tiny sk-muted break-all">{{ it.sku }}</div>
-                    </div>
-                    {% if it.has_manual_pdf %}
-                      <a class="sk-link sk-small whitespace-nowrap" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
-                    {% else %}
-                      <span class="sk-small sk-muted">Manual saknas</span>
-                    {% endif %}
+                    <span class="font-bold">{{ it.display_name }}</span>
+                    <a class="sk-link sk-small whitespace-nowrap" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
                   </li>
                 {% endfor %}
               </ul>
