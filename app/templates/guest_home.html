@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="sk-hero">
+<section class="sk-hero{% if has_selected_dates and categories is not none %} sk-hero--compact{% endif %}" data-sk-hero>
   <div class="sk-container sk-hero__grid">
     <div class="sk-hero__copy">
       <h1 class="sk-display">Hyr tält till festen.</h1>
@@ -85,11 +85,11 @@
       </div>
 
       {% if role == "customer" and customer_profile %}
-        <p class="sk-note mt-5">Inloggad som <strong>{{ customer_profile.full_name }}</strong>. Bokningen läggs på ditt konto.</p>
+        <p class="sk-note sk-hero__extra mt-5">Inloggad som <strong>{{ customer_profile.full_name }}</strong>. Bokningen läggs på ditt konto.</p>
       {% endif %}
 
-      <p class="sk-small sk-muted mt-4 max-w-[52ch]">
-        Tält hyrs 3 till 7 dagar. Behöver ni längre? Ring
+      <p class="sk-small sk-muted sk-hero__extra mt-4 max-w-[52ch]">
+        Tält hyrs 3 till 7 dagar. Behöver du längre? Ring
         <a class="sk-link" href="tel:0730813710">073-081 37 10</a>
         eller mejla
         <a class="sk-link" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>.

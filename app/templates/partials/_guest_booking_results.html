@@ -28,10 +28,10 @@
 {% macro sk_item_detail(c) -%}
   {%- if c.is_tent -%}
     {%- if c.capacity -%}Upp till {{ c.capacity }} gäster{%- endif -%}
-    {%- if c.setup_service_fee -%}{{ ", " if c.capacity else "" }}montering {{ c.setup_service_fee|sek }}{%- endif -%}
+    {%- if c.setup_service_fee -%}{{ ", " if c.capacity else "" }}<span class="whitespace-nowrap">montering {{ c.setup_service_fee|sek }}</span>{%- endif -%}
   {%- else -%}
     {{- c.notes or "" -}}
-    {%- if c.setup_service_fee -%}{{ ", " if c.notes else "" }}montering {{ c.setup_service_fee|sek }}{%- endif -%}
+    {%- if c.setup_service_fee -%}{{ ", " if c.notes else "" }}<span class="whitespace-nowrap">montering {{ c.setup_service_fee|sek }}</span>{%- endif -%}
   {%- endif -%}
 {%- endmacro %}
 
@@ -80,13 +80,6 @@
 
 {% if categories is not none %}
   {% if has_selected_dates %}
-  <div class="sk-datebar">
-    <div class="sk-container sk-datebar__inner">
-      <p class="sk-datebar__text">Era datum <strong class="sk-datebar__dates">{{ start_date|swedish_date_range(end_date) }}</strong></p>
-      <a href="#availability-search-form" class="sk-datebar__edit" data-sk-edit-dates>Ändra datum</a>
-    </div>
-  </div>
-
   <div class="sk-container sk-flow">
   <form
     method="post"
@@ -115,7 +108,7 @@
                 id="item-search-input"
                 type="search"
                 data-client-list-search
-                placeholder="Tält, stolar, bord eller ljus"
+                placeholder="Sök tält, stolar, ljus"
                 class="sk-input"
               >
             </div>
@@ -529,7 +522,7 @@
         <button type="submit" class="sk-btn sk-btn--primary sk-btn--block sk-submit mt-5">{% if role == "customer" and customer_profile %}Skicka bokningen{% else %}Boka och skapa konto{% endif %}</button>
 
         <p class="sk-tiny sk-muted mt-4">
-          Bokningen skapas som väntande. Det du valt reserveras tillfälligt tills vi har bekräftat den.
+          Bokningen skapas som väntande. Vi håller det du valt en begränsad tid medan vi går igenom den, och bekräftar eller hör av oss.
         </p>
       </div>
     </section>
@@ -1061,14 +1054,14 @@
             <span class="sk-bunting__flag sk-bg-orange" aria-hidden="true">3</span>
             <div>
               <h3 class="sk-bunting__title">Leverans och montering</h3>
-              <p class="mt-2 sk-muted">Lägg till om ni vill. Leveransen prissätts efter körsträckan till er adress.</p>
+              <p class="mt-2 sk-muted">Lägg till om du vill. Leveransen prissätts efter körsträckan till din adress.</p>
             </div>
           </li>
           <li class="sk-bunting__item">
             <span class="sk-bunting__flag sk-bg-magenta" aria-hidden="true">4</span>
             <div>
-              <h3 class="sk-bunting__title">Vi bekräftar</h3>
-              <p class="mt-2 sk-muted">Det du valt reserveras direkt. Vi går igenom bokningen och bekräftar den.</p>
+              <h3 class="sk-bunting__title">Vi hör av oss</h3>
+              <p class="mt-2 sk-muted">Vi håller det du valt en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.</p>
             </div>
           </li>
         </ol>
@@ -1138,9 +1131,9 @@
         <div class="sk-container sk-split">
           <div class="sk-split__intro">
             <h2 class="sk-h2" id="mobler-och-ljus"><span class="sk-wipe sk-wipe--orange">Möbler och ljus</span></h2>
-            <p class="sk-lead mt-5">Bord, stolar, bänkset och ljusslingor. Tryck på en rad för alla priser.</p>
+            <p class="sk-lead mt-5">Bord, stolar, bänkset och ljusslingor. Välj en rad för alla priser.</p>
             {% if customer_furnishing_without_tent_surcharge_enabled %}
-              <p class="sk-note sk-note--orange mt-5">Hyr ni möbler utan tält tillkommer 25&nbsp;% på möblerna.</p>
+              <p class="sk-note sk-note--orange mt-5">Hyr du möbler utan tält tillkommer 25&nbsp;% på möblerna.</p>
             {% endif %}
           </div>
 
@@ -1200,7 +1193,7 @@
           <dl class="sk-facts">
             <div>
               <dt>Leverans</dt>
-              <dd>Lägg till när du bokar. Avgiften räknas ut efter körsträckan till er adress.</dd>
+              <dd>Lägg till när du bokar. Avgiften räknas ut efter körsträckan till din adress.</dd>
             </div>
             <div>
               <dt>Montering{% if sk_setup_fees %} från {{ (sk_setup_fees|min)|sek }}{% endif %}</dt>
@@ -1208,7 +1201,7 @@
             </div>
             <div>
               <dt>Möblering</dt>
-              <dd>Väljer ni montering hjälper vi även till att ställa i ordning möblerna.</dd>
+              <dd>Väljer du montering hjälper vi även till att ställa i ordning möblerna.</dd>
             </div>
             <div>
               <dt>Var</dt>

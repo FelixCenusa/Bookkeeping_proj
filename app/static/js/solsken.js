@@ -70,22 +70,6 @@
     }
   });
 
-  // ------------------------------------------------- "Ändra" on the date bar
-  document.addEventListener("click", (event) => {
-    const link = event.target.closest("[data-sk-edit-dates]");
-    if (!link) return;
-    const form = document.getElementById("availability-search-form");
-    const start = form?.querySelector("[data-date-range-start]");
-    if (!form) return;
-    event.preventDefault();
-    form.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth", block: "center" });
-    window.setTimeout(() => {
-      if (!start) return;
-      start.focus({ preventScroll: true });
-      if (start._flatpickr) start._flatpickr.open();
-    }, reduceMotion.matches ? 0 : 450);
-  });
-
   // ----------------------------------------------------- mobile total bar
   let totalCleanup = null;
 
@@ -139,6 +123,11 @@
 
   // ---------------------------------------------------- results swapping
   const onResultsSwapped = (results) => {
+    // With dates chosen the hero shrinks to a heading and the date form, so
+    // the booking flow starts near the top instead of below the photo.
+    document
+      .querySelector("[data-sk-hero]")
+      ?.classList.toggle("sk-hero--compact", Boolean(results.querySelector("#guest-booking-form")));
     bindWipes(results);
     syncSteppers(results);
     bindMobileTotal();
