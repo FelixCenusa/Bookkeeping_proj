@@ -429,6 +429,7 @@
 {% set booked_on = booking.created_at.strftime('%Y-%m-%d') if booking.created_at.strftime is defined else booking.created_at[:10] %}
 {% set start_iso = booking.start_date.isoformat() if booking.start_date.isoformat is defined else booking.start_date|string %}
 {% set end_iso = booking.end_date.isoformat() if booking.end_date.isoformat is defined else booking.end_date|string %}
+{% set manual_items = items | selectattr('is_tent') | selectattr('has_manual_pdf') | unique(attribute='display_name') | list %}
 <div class="kv-page-top">{{ kv.festoon(sags=5, per_sag=3, depth=34, top=0, class_name='hidden md:block') }}{{ kv.festoon(sags=3, per_sag=3, depth=24, top=0, class_name='md:hidden') }}</div>
 
 <section class="kv-wrap pb-10 pt-24 md:pb-14 md:pt-32" aria-labelledby="kv-booking-title">
@@ -444,7 +445,7 @@
     {% if booking.status == 'confirmed' %}
       Bokningen är bekräftad.
     {% elif booking.status == 'pending' %}
-      Vi går igenom bokningen och hör av oss. Under tiden är artiklarna reserverade åt dig en begränsad tid.
+      Vi går igenom bokningen och bekräftar den eller hör av oss. Under tiden håller vi det du valt en begränsad tid.
     {% else %}
       Bokningen är avbokad.
     {% endif %}
@@ -504,14 +505,14 @@
               </div>
               {% if cost_breakdown.show_furnishing_surcharge %}
                 <div class="kv-receipt-line">
-                  <span>Inredning utan tält (+25 %)</span>
+                  <span>Inredning utan tält (+25&nbsp;%)</span>
                   <span class="kv-num">{{ cost_breakdown.furnishing_surcharge|sek }}</span>
                 </div>
-                <p class="text-[0.8125rem] leading-snug text-[#7a4a10]">Bokningen innehåller inget tält, därför läggs 25 % på all inredning.</p>
+                <p class="text-[0.8125rem] leading-snug text-[#7a4a10]">Bokningen innehåller inget tält, därför läggs 25&nbsp;% på all inredning.</p>
               {% endif %}
               {% if cost_breakdown.show_vat_breakdown %}
                 <div class="kv-receipt-line">
-                  <span>Moms (25 %)</span>
+                  <span>Moms (25&nbsp;%)</span>
                   <span class="kv-num">{{ cost_breakdown.vat_amount|sek }}</span>
                 </div>
               {% endif %}
@@ -555,6 +556,18 @@
           <dt>Montering</dt>
           <dd>{{ "Ingår" if booking.include_setup_service else "Ingår inte" }}</dd>
         </div>
+        {% if manual_items %}
+          <div>
+            <dt>{{ "Tältmanualer" if manual_items|length > 1 else "Tältmanual" }}</dt>
+            <dd>
+              <ul class="space-y-1.5">
+                {% for it in manual_items %}
+                  <li><a class="kv-link" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">{{ it.display_name }} (PDF)</a></li>
+                {% endfor %}
+              </ul>
+            </dd>
+          </div>
+        {% endif %}
         <div>
           <dt>Adress</dt>
           <dd>
@@ -603,28 +616,9 @@
 <section class="kv-wrap pb-20 md:pb-28" aria-labelledby="kv-items-title">
   <h2 id="kv-items-title" class="kv-display border-t border-[rgba(242,236,226,0.16)] pt-10 text-[1.75rem] md:text-[2rem]">Bokade artiklar</h2>
 
-  {% set tent_items = items | selectattr('is_tent') | list %}
-  {% if tent_items %}
-    <div class="mt-8">
-      <h3 class="font-semibold">Tältmanualer</h3>
-      <ul class="mt-3 grid gap-x-10 sm:grid-cols-2">
-        {% for it in tent_items %}
-          <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[rgba(242,236,226,0.12)] py-3">
-            <span>{{ it.display_name }} <span class="text-sm text-[#9aa6b8]">{{ it.sku }}</span></span>
-            {% if it.has_manual_pdf %}
-              <a class="kv-link text-sm" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
-            {% else %}
-              <span class="text-sm text-[#9aa6b8]">Ingen manual än</span>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
-
   <details class="kv-disclosure group mt-8" data-client-list>
     <summary class="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-3 border-y border-[rgba(242,236,226,0.16)] py-3 font-semibold">
-      <span>Alla artiklar, en rad per exemplar</span>
+      <span>{% if items|length == 1 %}Artikeln i bokningen{% else %}Alla {{ items|length }} artiklar, en rad per exemplar{% endif %}</span>
       <span class="text-sm font-normal text-[#f8c98a] group-open:hidden">Visa</span>
       <span class="hidden text-sm font-normal text-[#f8c98a] group-open:inline">Dölj</span>
     </summary>
