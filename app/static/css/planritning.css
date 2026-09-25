@@ -2883,6 +2883,13 @@ body.pr-site {
   .pr-site .pr-hero__plan { max-width: 560px; }
 }
 
+/* ---------- Load-in and scroll reveals (planritning.js + Motion) ----------
+   Hidden only while html.pr-motion is set: the head script adds it when motion is
+   allowed, and it is removed again if Motion or planritning.js does not run. */
+
+.pr-motion .pr-site [data-reveal] { opacity: 0; }
+.pr-site [data-count] { font-variant-numeric: tabular-nums; }
+
 /* ---------- Reduced motion: keep colour and opacity changes, drop movement ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -2896,6 +2903,8 @@ body.pr-site {
 
   .pr-js .pr-site .pr-mobilebar,
   .pr-js .pr-site .pr-mobilebar.is-away { transform: none; }
+
+  .pr-motion .pr-site [data-reveal] { opacity: 1; }
 }
 
 @media print {
@@ -2907,6 +2916,7 @@ body.pr-site {
   .pr-site .ps-tent.is-on { opacity: 1 !important; }
   .pr-site .pr-mobilebar,
   .pr-site .pr-nav__menu { display: none !important; }
+  .pr-site [data-reveal] { opacity: 1 !important; transform: none !important; }
 }
 
 /* ---------- Flatpickr ---------- */

@@ -1088,24 +1088,24 @@
 
     <section class="pr-section pr-how" aria-labelledby="how-title">
       <div class="pr-wrap">
-        <h2 class="pr-h2" id="how-title">Så går bokningen till</h2>
+        <h2 class="pr-h2" id="how-title" data-reveal>Så går bokningen till</h2>
         <ol class="pr-how__steps">
-          <li class="pr-how__step">
+          <li class="pr-how__step" data-reveal>
             <span class="pr-how__no pr-num" aria-hidden="true">1</span>
             <h3 class="pr-h3">Välj datum</h3>
             <p>Välj när festen är{% if ns_land.lo is not none %}. Tält hyrs i <span class="pr-num">{{ ns_land.lo }}</span> till <span class="pr-num">{{ ns_land.hi }}</span> dagar{% endif %}.</p>
           </li>
-          <li class="pr-how__step">
+          <li class="pr-how__step" data-reveal>
             <span class="pr-how__no pr-num" aria-hidden="true">2</span>
             <h3 class="pr-h3">Välj tält och tillbehör</h3>
             <p>Du ser vad som är ledigt de dagarna och vad det kostar för hela perioden.</p>
           </li>
-          <li class="pr-how__step">
+          <li class="pr-how__step" data-reveal>
             <span class="pr-how__no pr-num" aria-hidden="true">3</span>
             <h3 class="pr-h3">Leverans och montering</h3>
             <p>Lägg till leverans, priset räknas på körsträckan. Montering kan väljas till.</p>
           </li>
-          <li class="pr-how__step">
+          <li class="pr-how__step" data-reveal>
             <span class="pr-how__no pr-num" aria-hidden="true">4</span>
             <h3 class="pr-h3">Vi bekräftar</h3>
             <p>Vi håller det du valt en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.</p>
@@ -1125,7 +1125,7 @@
     {% if pr_tents %}
     <section class="pr-section pr-range" id="talt" aria-labelledby="range-title">
       <div class="pr-wrap">
-        <header class="pr-section__head">
+        <header class="pr-section__head" data-reveal>
           <h2 class="pr-h2" id="range-title">Tälten</h2>
           <p class="pr-section__lede">Alla {{ pr_tents|length }} storlekar är ritade i samma skala. En ruta i ritningen är en kvadratmeter.</p>
         </header>
@@ -1152,7 +1152,7 @@
     {% if pr_others %}
     <section class="pr-section pr-extras" aria-labelledby="extras-title">
       <div class="pr-wrap pr-extras__grid">
-        <header class="pr-extras__intro">
+        <header class="pr-extras__intro" data-reveal>
           <h2 class="pr-h2" id="extras-title">Bord, stolar och ljus</h2>
           <p class="pr-section__lede">Priset gäller per styck för hela hyresperioden{% if ns_land.extra_lo == 1 %}, som kan vara en enda dag{% endif %}. Hur många som är lediga ser du när du har valt datum.</p>
           <img
@@ -1198,7 +1198,7 @@
           >
         </div>
         <div class="pr-service__text">
-          <h2 class="pr-h2" id="service-title">Leverans och montering</h2>
+          <h2 class="pr-h2" id="service-title" data-reveal>Leverans och montering</h2>
           <p>Vi kör ut tält och tillbehör i Karlshamn och övriga Blekinge. Leveranspriset räknas på körsträckan när du skriver in adressen i bokningen, så du ser det innan du skickar.</p>
           <p>Med leverans kan du också välja montering och nedmontering av tältet{% if ns_land.setup_lo is not none %}, från <span class="pr-num">{{ ns_land.setup_lo|sek }}</span> beroende på storlek{% endif %}. Väljer du montering hjälper vi även till med möbleringen.</p>
           <p class="pr-service__pickup">Utan leverans hämtar du själv.</p>
@@ -1208,7 +1208,7 @@
 
     <section class="pr-section pr-help" aria-labelledby="help-title">
       <div class="pr-wrap pr-help__grid">
-        <div>
+        <div data-reveal>
           <h2 class="pr-h2" id="help-title">Frågor innan du bokar?</h2>
           <p class="pr-section__lede">Läs svaren om bokning, leverans och montering, eller hör av dig direkt.</p>
         </div>

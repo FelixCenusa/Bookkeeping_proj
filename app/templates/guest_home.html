@@ -25,10 +25,10 @@
   <div class="pr-wrap pr-hero__grid">
     <div class="pr-hero__copy">
       {% if has_selected_dates %}
-        <h1 class="pr-h1 pr-h1--compact" id="hero-title">Boka tält till festen</h1>
+        <h1 class="pr-h1 pr-h1--compact" id="hero-title" data-reveal="load">Boka tält till festen</h1>
       {% else %}
-        <h1 class="pr-h1" id="hero-title">Hyr partytält i Karlshamn och Blekinge</h1>
-        <p class="pr-lede">Välj datum så ser du direkt vilka tält och tillbehör som är lediga, med pris för hela perioden.</p>
+        <h1 class="pr-h1" id="hero-title" data-reveal="load">Hyr partytält i Karlshamn och Blekinge</h1>
+        <p class="pr-lede" data-reveal="load">Välj datum så ser du direkt vilka tält och tillbehör som är lediga, med pris för hela perioden.</p>
       {% endif %}
 
       <form
@@ -36,6 +36,7 @@
         method="get"
         action="{{ url_for('routes.home') }}"
         class="pr-search"
+        data-reveal="load-fade"
         data-date-range
         data-date-range-calendar="themed"
         data-date-range-locale="sv"
@@ -96,7 +97,7 @@
     </div>
 
     {% if not has_selected_dates and hero_tents %}
-      <div class="pr-hero__plan">
+      <div class="pr-hero__plan" data-reveal="load" data-reveal-y="16">
         {{ pr.plan_sheet(hero_tents, default_guests=30, link_prefix='talt-') }}
       </div>
     {% endif %}
@@ -109,27 +110,27 @@
   {%- set last_dims = (hero_tents|last)|tent_dimensions -%}
   <section class="pr-stats" aria-label="Sortimentet i siffror">
     <dl class="pr-wrap pr-stats__row">
-      <div class="pr-stats__cell">
+      <div class="pr-stats__cell" data-reveal>
         <dt>Tältstorlekar</dt>
-        <dd><span class="pr-stats__num pr-num">{{ hero_tents|length }}</span>{% if first_dims and last_dims %}<span class="pr-stats__note">från <span class="pr-num">{{ pr.num(first_dims.width) }}×{{ pr.num(first_dims.length) }}</span> till <span class="pr-num">{{ pr.num(last_dims.width) }}×{{ pr.num(last_dims.length) }}</span> meter</span>{% endif %}</dd>
+        <dd><span class="pr-stats__num pr-num" data-count>{{ hero_tents|length }}</span>{% if first_dims and last_dims %}<span class="pr-stats__note">från <span class="pr-num">{{ pr.num(first_dims.width) }}×{{ pr.num(first_dims.length) }}</span> till <span class="pr-num">{{ pr.num(last_dims.width) }}×{{ pr.num(last_dims.length) }}</span> meter</span>{% endif %}</dd>
       </div>
       {% if caps %}
-      <div class="pr-stats__cell">
+      <div class="pr-stats__cell" data-reveal>
         <dt>Gäster per tält</dt>
-        <dd><span class="pr-stats__num pr-num">{{ caps|min }}–{{ caps|max }}</span><span class="pr-stats__note">beroende på storlek</span></dd>
+        <dd><span class="pr-stats__num pr-num" data-count>{{ caps|min }}–{{ caps|max }}</span><span class="pr-stats__note">beroende på storlek</span></dd>
       </div>
       {% endif %}
       {% if ns_days.lo is not none %}
-      <div class="pr-stats__cell">
+      <div class="pr-stats__cell" data-reveal>
         <dt>Hyrestid för tält</dt>
-        <dd><span class="pr-stats__num pr-num">{{ ns_days.lo }}–{{ ns_days.hi }}</span><span class="pr-stats__note">dagar, pris för hela perioden</span></dd>
+        <dd><span class="pr-stats__num pr-num" data-count>{{ ns_days.lo }}–{{ ns_days.hi }}</span><span class="pr-stats__note">dagar, pris för hela perioden</span></dd>
       </div>
       {% endif %}
       {%- set hero_extras = (categories or [])|rejectattr('is_tent')|list %}
       {% if hero_extras %}
-      <div class="pr-stats__cell">
+      <div class="pr-stats__cell" data-reveal>
         <dt>Tillbehör</dt>
-        <dd><span class="pr-stats__num pr-num">{{ hero_extras|length }}</span><span class="pr-stats__note">sorters bord, stolar och ljus</span></dd>
+        <dd><span class="pr-stats__num pr-num" data-count>{{ hero_extras|length }}</span><span class="pr-stats__note">sorters bord, stolar och ljus</span></dd>
       </div>
       {% endif %}
     </dl>

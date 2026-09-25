@@ -14,6 +14,17 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   var hasIO = "IntersectionObserver" in window;
 
+  // Motion (motion.dev) drives the load-in and reveals. The head script only sets
+  // html.pr-motion when motion is allowed; without Motion, show everything now.
+  var root = document.documentElement;
+  var M = window.Motion;
+  var motionOn = root.classList.contains("pr-motion") && !!(M && M.animate && M.inView && M.stagger);
+  if (motionOn) {
+    window.__prMotion = true;
+  } else {
+    root.classList.remove("pr-motion");
+  }
+
   function each(root, selector, fn) {
     Array.prototype.forEach.call(root.querySelectorAll(selector), fn);
   }
@@ -53,6 +64,146 @@
       }
       drawObserver.observe(svg);
     });
+  }
+
+  /* ---------- Load-in, scroll reveals and stat count-up ---------- */
+
+  var EASE_OUT = [0.23, 1, 0.32, 1];
+  var bootAt = 0;
+
+  function stopMotion() {
+    motionOn = false;
+    root.classList.remove("pr-motion");
+  }
+
+  // Hand the element back to the stylesheet: no inline opacity, transform or
+  // will-change left behind (price popovers are position:fixed inside these trees).
+  // Motion writes its final values on its own next frame, so clear again after it.
+  function clearInline(el) {
+    el.style.opacity = "";
+    el.style.transform = "";
+    el.style.willChange = "";
+    if (!el.getAttribute("style")) el.removeAttribute("style");
+  }
+
+  function settle(el) {
+    if (!el.hasAttribute("data-reveal")) return;
+    el.removeAttribute("data-reveal");
+    clearInline(el);
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        clearInline(el);
+      });
+    });
+    window.setTimeout(function () {
+      clearInline(el);
+    }, 300);
+  }
+
+  // Counts a stat up to the number already in the HTML. A single number counts
+  // from 0; a range ("3–80") keeps its low end and counts the high end up from it.
+  // Anything else ("6×10") is left alone. The clock is a real Web Animation, so
+  // anything that finishes animations early also lands on the final text.
+  function countUp(el, delay) {
+    var finalText = el.textContent;
+    var match = /^(\d+)(?:–(\d+))?$/.exec(finalText.trim());
+    if (!match || typeof el.animate !== "function") return;
+    var low = Number(match[1]);
+    var isRange = match[2] !== undefined;
+    var from = isRange ? low : 0;
+    var to = isRange ? Number(match[2]) : low;
+    if (to - from < 2) return;
+
+    var duration = 600;
+    var delayMs = delay * 1000;
+    var clock = el.animate([{ opacity: 1 }, { opacity: 1 }], { duration: duration, delay: delayMs });
+    var render = function (value) {
+      el.textContent = isRange ? low + "–" + value : String(value);
+    };
+    var land = function () {
+      el.textContent = finalText;
+    };
+    var tick = function () {
+      if (clock.playState === "finished" || clock.playState === "idle") return land();
+      var t = Math.min(Math.max(((clock.currentTime || 0) - delayMs) / duration, 0), 1);
+      render(Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3))));
+      window.requestAnimationFrame(tick);
+    };
+    clock.finished.then(land, land);
+    render(from);
+    window.requestAnimationFrame(tick);
+  }
+
+  function play(el, delay) {
+    var kind = el.getAttribute("data-reveal") || "";
+    var fadeOnly = kind.indexOf("fade") !== -1;
+    var y = Number(el.getAttribute("data-reveal-y")) || 12;
+    var keyframes = fadeOnly
+      ? { opacity: [0, 1] }
+      : { opacity: [0, 1], transform: ["translateY(" + y + "px)", "none"] };
+    var done = function () {
+      settle(el);
+    };
+    Array.prototype.forEach.call(el.querySelectorAll("[data-count]"), function (num) {
+      countUp(num, delay);
+    });
+    try {
+      var controls = M.animate(el, keyframes, { duration: fadeOnly ? 0.45 : 0.5, delay: delay, ease: EASE_OUT });
+      if (controls && typeof controls.then === "function") controls.then(done, done);
+    } catch (error) {
+      done();
+    }
+    // Belt and braces: never leave an element hidden if the promise goes missing.
+    window.setTimeout(done, (delay + 2) * 1000);
+  }
+
+  // Hero pieces come up in document order: heading, lede, date form, plan sheet.
+  function initLoadIn() {
+    var items = Array.prototype.slice.call(document.querySelectorAll('[data-reveal^="load"]'));
+    var delayFor = M.stagger(0.07);
+    items.forEach(function (el, index) {
+      play(el, delayFor(index, items.length));
+    });
+  }
+
+  // Everything that enters view in the same frame is staggered as one group. Groups
+  // that are already on screen at load wait until the hero has started.
+  var revealQueue = [];
+  var flushPending = false;
+
+  function flushReveals() {
+    flushPending = false;
+    var batch = revealQueue.splice(0).filter(function (el) {
+      return el.isConnected;
+    });
+    batch.sort(function (a, b) {
+      return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    var sinceBoot = (window.performance.now() - bootAt) / 1000;
+    var delayFor = M.stagger(0.06, { startDelay: Math.max(0, 0.3 - sinceBoot) });
+    batch.forEach(function (el, index) {
+      play(el, delayFor(index, batch.length));
+    });
+  }
+
+  function initReveals(scope) {
+    var fresh = [];
+    each(scope, "[data-reveal]", function (el) {
+      if ((el.getAttribute("data-reveal") || "").indexOf("load") === 0) return;
+      if (once(el, "revealInit")) fresh.push(el);
+    });
+    if (!fresh.length) return;
+    M.inView(
+      fresh,
+      function (el) {
+        revealQueue.push(el);
+        if (!flushPending) {
+          flushPending = true;
+          window.requestAnimationFrame(flushReveals);
+        }
+      },
+      { margin: "0px 0px -8% 0px" }
+    );
   }
 
   /* ---------- Plan sheet: guests to tent size ---------- */
@@ -331,15 +482,30 @@
 
   /* ---------- Boot, and re-boot after the availability swap ---------- */
 
-  function init(root) {
-    initFootprints(root);
-    initPlanSheet(root);
-    initFlow(root);
-    initMenu(root);
+  function init(scope) {
+    initFootprints(scope);
+    initPlanSheet(scope);
+    initFlow(scope);
+    initMenu(scope);
+    if (motionOn) {
+      try {
+        initReveals(scope);
+      } catch (error) {
+        stopMotion();
+      }
+    }
   }
 
   function boot() {
     document.documentElement.classList.add("pr-js");
+    bootAt = window.performance.now();
+    if (motionOn) {
+      try {
+        initLoadIn();
+      } catch (error) {
+        stopMotion();
+      }
+    }
     init(document);
 
     var results = document.getElementById("availability-results");

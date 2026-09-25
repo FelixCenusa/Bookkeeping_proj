@@ -4,6 +4,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
   <script>
     document.documentElement.classList.add("pr-js");
+    // Load-in and scroll reveals: [data-reveal] is hidden only under html.pr-motion.
+    // planritning.js drops the class when Motion is missing; this drops it if nothing ran.
+    if (window.matchMedia && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.classList.add("pr-motion");
+      window.setTimeout(function () {
+        if (!window.__prMotion) document.documentElement.classList.remove("pr-motion");
+      }, 2000);
+    }
     // If planritning.js never boots, show the drawings without their entrance.
     window.setTimeout(function () {
       if (!window.__prReady) document.documentElement.classList.remove("pr-js");
