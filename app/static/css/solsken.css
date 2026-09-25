@@ -376,6 +376,7 @@ select.sk-input {
   padding: 0.1rem 0 0.1rem 0.85rem;
   font-size: 0.9375rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .sk-note--orange {
@@ -1564,6 +1565,7 @@ select.sk-input {
 
 .sk-flow__grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.75rem;
   margin-top: 1.75rem;
 }
@@ -1593,6 +1595,7 @@ select.sk-input {
 
 .sk-flow__main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.75rem;
   min-width: 0;
 }
@@ -1943,6 +1946,7 @@ select.sk-input {
 /* Contact fields (Steg 4). */
 .sk-fields {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.1rem 1rem;
 }
 

@@ -332,7 +332,7 @@
       <div class="sk-step__body">
         <div class="sk-fields">
           {% if role == "customer" and customer_profile %}
-            <p class="sk-note sk-fields__full">Bokar som <strong>{{ customer_profile.full_name }}</strong>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.</p>
+            <p class="sk-note sk-fields__full">Bokar som <strong>{{ customer_profile.full_name }}</strong>{% if customer_profile.email %}<br>{{ customer_profile.email }}{% endif %}</p>
 
             <div class="sk-fields__full">
               <label class="sk-label" for="phone">Telefon</label>
