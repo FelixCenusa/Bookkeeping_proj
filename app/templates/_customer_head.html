@@ -1,0 +1,32 @@
+
+  <script>document.documentElement.classList.add("sk-js");</script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kada: {
+              ink: "#1b3a6b",
+              soft: "#4a5f85",
+              mist: "#f3f6fb",
+              line: "#d8dfeb",
+              magenta: "#e23d8b",
+              orange: "#f39a2b",
+              leaf: "#1f9d6b",
+              teal: "#3cb4ae",
+              sun: "#f7c548",
+              coral: "#ea5342",
+            },
+          },
+          fontFamily: {
+            kada: ['"Bricolage Grotesque"', "ui-sans-serif", "system-ui", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/solsken.css') }}">
+  <script src="{{ url_for('static', filename='js/solsken.js') }}" defer></script>

@@ -1,0 +1,35 @@
+
+  <footer class="sk-footer">
+    <div class="sk-valance" aria-hidden="true">{% for i in range(56) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+    <div class="sk-container sk-footer__grid">
+      <div>
+        <div class="sk-footer__name">KADA PartyTillbehör</div>
+        <p class="mt-3 max-w-[34ch] text-[1rem] leading-relaxed text-white/85">
+          Tält, möbler och ljus till festen. Vi hyr ut i Karlshamn och övriga Blekinge.
+        </p>
+      </div>
+
+      <nav aria-label="Sidfot">
+        <ul class="sk-footer__links grid gap-0">
+          <li><a href="{{ url_for('routes.home') }}">Boka</a></li>
+          <li><a href="{{ url_for('routes.faq') }}">Vanliga frågor</a></li>
+          <li><a href="{{ url_for('routes.about') }}">Om oss</a></li>
+          <li><a href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}" target="_blank" rel="noopener noreferrer">Hyresvillkor (PDF)</a></li>
+        </ul>
+      </nav>
+
+      <address class="sk-footer__contact not-italic">
+        <div class="leading-relaxed text-white/85">Östersjövägen 45<br>374 31 Karlshamn</div>
+        <div class="mt-3 grid">
+          <a href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>
+          <a href="tel:0730813710">073-081 37 10</a>
+        </div>
+      </address>
+    </div>
+    <div class="sk-container">
+      <div class="sk-footer__base">
+        <span>Enklaste festen i mannaminne.</span>
+        <span>Uthyrning i Karlshamn och övriga Blekinge</span>
+      </div>
+    </div>
+  </footer>

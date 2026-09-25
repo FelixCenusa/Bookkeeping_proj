@@ -1,0 +1,54 @@
+{% set sk_path = request.path %}
+{% set sk_logged_in = session.get('user_id') %}
+<nav class="sk-nav" aria-label="Huvudmeny">
+  <div class="sk-container sk-nav__bar">
+    <a class="sk-nav__logo" href="{{ url_for('routes.home') }}" aria-label="KADA PartyTillbehör, till startsidan">
+      <img src="{{ customer_logo_url }}" alt="KADA PartyTillbehör" width="1524" height="319">
+    </a>
+
+    <div class="sk-nav__links">
+      <a class="sk-nav__link" href="{{ url_for('routes.home') }}"{% if sk_path == '/' %} aria-current="page"{% endif %}>Boka</a>
+      <a class="sk-nav__link" href="{{ url_for('routes.faq') }}"{% if sk_path == '/faq' %} aria-current="page"{% endif %}>Vanliga frågor</a>
+      <a class="sk-nav__link" href="{{ url_for('routes.about') }}"{% if sk_path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
+      {% if sk_logged_in %}
+        <a class="sk-nav__link" href="{{ url_for('routes.customers') }}"{% if sk_path.startswith('/customers') or sk_path.startswith('/bookings') %} aria-current="page"{% endif %}>Min profil</a>
+      {% endif %}
+    </div>
+
+    <div class="sk-nav__actions">
+      {% if sk_logged_in %}
+        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+          <button class="sk-btn sk-btn--outline sk-btn--sm" type="submit">Logga ut</button>
+        </form>
+      {% else %}
+        <a class="sk-nav__link" href="{{ url_for('auth.login_form') }}"{% if sk_path == '/auth/login' %} aria-current="page"{% endif %}>Logga in</a>
+        <a class="sk-btn sk-btn--primary sk-btn--sm" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+      {% endif %}
+    </div>
+
+    <details class="sk-nav__menu">
+      <summary class="sk-nav__toggle" data-nav-toggle aria-label="Meny">
+        <span class="sk-nav__toggle-icon" aria-hidden="true"></span>
+        <span class="sk-nav__closed-label">Meny</span>
+        <span class="sk-nav__open-label">Stäng</span>
+      </summary>
+      <div class="sk-nav__sheet">
+        <div class="sk-container">
+          <a class="sk-nav__sheet-link" href="{{ url_for('routes.home') }}"{% if sk_path == '/' %} aria-current="page"{% endif %}>Boka</a>
+          <a class="sk-nav__sheet-link" href="{{ url_for('routes.faq') }}"{% if sk_path == '/faq' %} aria-current="page"{% endif %}>Vanliga frågor</a>
+          <a class="sk-nav__sheet-link" href="{{ url_for('routes.about') }}"{% if sk_path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
+          {% if sk_logged_in %}
+            <a class="sk-nav__sheet-link" href="{{ url_for('routes.customers') }}">Min profil</a>
+            <form method="post" action="{{ url_for('auth.logout') }}" class="m-0 mt-6">
+              <button class="sk-btn sk-btn--outline sk-btn--block" type="submit">Logga ut</button>
+            </form>
+          {% else %}
+            <a class="sk-nav__sheet-link" href="{{ url_for('auth.login_form') }}"{% if sk_path == '/auth/login' %} aria-current="page"{% endif %}>Logga in</a>
+            <a class="sk-btn sk-btn--primary sk-btn--block mt-6" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+          {% endif %}
+        </div>
+      </div>
+    </details>
+  </div>
+  <div class="sk-valance" aria-hidden="true">{% for i in range(64) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+</nav>
