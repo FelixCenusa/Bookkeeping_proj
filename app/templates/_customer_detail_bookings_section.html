@@ -86,92 +86,79 @@
   </div>
 </section>
 {% else %}
-<section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-  <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Bokningar</div>
-        <h2 class="mt-1 text-2xl font-black text-slate-950">Dina bokningar</h2>
-      </div>
-      <div class="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-        {{ bookings_page.total_items }} totalt
-      </div>
+<section class="sk-step" aria-labelledby="dina-bokningar">
+  <header class="sk-step__bar sk-scallop sk-bg-teal">
+    <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+      <h2 class="sk-step__title" id="dina-bokningar">Dina bokningar</h2>
+      <span class="sk-step__label">{{ bookings_page.total_items }} totalt</span>
     </div>
-  </div>
+  </header>
 
-  <div class="px-6 py-6 md:px-8">
+  <div class="sk-step__body">
     {% if bookings %}
-      <div class="grid gap-4 md:hidden">
+      <div class="sk-bookinglist md:hidden">
         {% for b in bookings %}
-          <a href="{{ url_for('routes.booking_detail', booking_id=b.id) }}" class="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#fffdfd_0%,#ffffff_100%)] p-4 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)] transition hover:border-pink-200">
+          <a href="{{ url_for('routes.booking_detail', booking_id=b.id) }}" class="sk-bookingcard">
             <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="text-sm font-bold text-rose-600">Bokning #{{ b.id }}</div>
-                <div class="mt-1 text-sm text-slate-600">{{ b.start_date }} - {{ b.end_date }}</div>
+              <div class="min-w-0">
+                <div class="sk-bookingcard__id">Bokning #{{ b.id }}</div>
+                <div class="sk-bookingcard__dates">{{ b.start_date|swedish_date_range(b.end_date) }}</div>
               </div>
-              {{ ui.booking_status_badge(b.status, variant='customer', confirmed_label='Bekräftad', pending_label='Väntande', cancelled_label='Avbokad') }}
+              {{ ui.booking_status_badge(b.status, variant='customer', confirmed_label='Bekräftad', pending_label='Väntar på bekräftelse', cancelled_label='Avbokad') }}
             </div>
-            <div class="mt-3 flex flex-wrap gap-2 text-xs">
-              {% if b.include_setup_service %}<span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-700">Montering</span>{% endif %}
-              {% if b.include_delivery %}<span class="inline-flex rounded-full border border-pink-200 bg-pink-50 px-3 py-1 font-medium text-rose-500">Leverans</span>{% endif %}
-              {% if b.booking_note %}<span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-600">Bokningsanteckning</span>{% endif %}
+            <div class="mt-3 flex flex-wrap gap-2">
+              {% if b.include_delivery %}<span class="sk-tag">Leverans</span>{% endif %}
+              {% if b.include_setup_service %}<span class="sk-tag">Montering</span>{% endif %}
+              {% if b.booking_note %}<span class="sk-tag">Meddelande</span>{% endif %}
               {% if not b.include_setup_service and not b.include_delivery and not b.booking_note %}
-                <span class="text-slate-400">Inga tillval</span>
+                <span class="sk-small sk-muted">Inga tillval</span>
               {% endif %}
             </div>
           </a>
         {% endfor %}
       </div>
 
-      <div class="hidden overflow-hidden rounded-[1.5rem] border border-slate-200 md:block">
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-[linear-gradient(90deg,#ec4899_0%,#f472b6_72%,#22c55e_140%)] text-white">
+      <div class="hidden md:block">
+        <table class="sk-table sk-table--links">
+          <thead>
+            <tr>
+              {{ ui.sortable_header("Bokning", "id", current_sort, current_sort_dir, class_name='') }}
+              {{ ui.sortable_header("Datum", "dates", current_sort, current_sort_dir, class_name='') }}
+              {{ ui.sortable_header("Status", "status", current_sort, current_sort_dir, class_name='') }}
+              <th data-sort="false">Tillval</th>
+              {{ ui.sortable_header("Skapad", "created", current_sort, current_sort_dir, default_dir='desc', class_name='') }}
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bookings %}
               <tr>
-                {{ ui.sortable_header("ID", "id", current_sort, current_sort_dir) }}
-                {{ ui.sortable_header("Datum", "dates", current_sort, current_sort_dir) }}
-                {{ ui.sortable_header("Status", "status", current_sort, current_sort_dir) }}
-                <th class="p-3 text-left font-medium" data-sort="false">Tillval</th>
-                {{ ui.sortable_header("Skapad", "created", current_sort, current_sort_dir, default_dir='desc') }}
+                <td data-sort-value="{{ b.id }}">
+                  <a class="sk-rowlink sk-rowlink--id" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">#{{ b.id }}</a>
+                </td>
+                <td data-sort-value="{{ b.start_date }}">
+                  <a class="sk-rowlink" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">{{ b.start_date|swedish_date_range(b.end_date) }}</a>
+                </td>
+                <td data-sort-value="{{ b.status }}">
+                  <a class="sk-rowlink" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">
+                    {{ ui.booking_status_badge(b.status, variant='customer', confirmed_label='Bekräftad', pending_label='Väntar på bekräftelse', cancelled_label='Avbokad') }}
+                  </a>
+                </td>
+                <td>
+                  <a class="sk-rowlink sk-small" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">
+                    {% if b.include_delivery %}Leverans{% if b.delivery_fee is not none %} {{ b.delivery_fee|sek }}{% endif %}{% endif %}{% if b.include_delivery and b.include_setup_service %}, {% endif %}{% if b.include_setup_service %}montering{% endif %}
+                    {% if not b.include_setup_service and not b.include_delivery %}<span class="sk-muted">Inga tillval</span>{% endif %}
+                  </a>
+                </td>
+                <td class="sk-muted sk-small" data-sort-value="{{ b.created_at }}">
+                  <a class="sk-rowlink" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">{{ b.created_at.strftime('%Y-%m-%d') if b.created_at.strftime is defined else (b.created_at|string)[:10] }}</a>
+                </td>
               </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 bg-white">
-              {% for b in bookings %}
-                <tr class="transition hover:bg-pink-50/35">
-                  <td class="p-3 font-semibold text-rose-600" data-sort-value="{{ b.id }}">
-                    <a class="block w-full h-full" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">#{{ b.id }}</a>
-                  </td>
-                  <td class="p-3" data-sort-value="{{ b.start_date }}">
-                    <a class="block w-full h-full text-slate-700" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">
-                      {{ b.start_date }} - {{ b.end_date }}
-                    </a>
-                  </td>
-                  <td class="p-3" data-sort-value="{{ b.status }}">
-                    <a class="block w-full h-full" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">
-                      {{ ui.booking_status_badge(b.status, variant='customer', confirmed_label='Bekräftad', pending_label='Väntande', cancelled_label='Avbokad') }}
-                    </a>
-                  </td>
-                  <td class="p-3 text-xs text-slate-600">
-                    <a class="block w-full h-full space-y-1" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">
-                      {% if b.include_setup_service %}<div>Montering ingår</div>{% endif %}
-                      {% if b.include_delivery %}<div>Leverans ingår{% if b.delivery_fee is not none %} ({{ b.delivery_fee }} kr){% endif %}</div>{% endif %}
-                      {% if b.booking_note %}<div class="text-slate-500">Har bokningsanteckning</div>{% endif %}
-                      {% if not b.include_setup_service and not b.include_delivery and not b.booking_note %}
-                        <span class="text-slate-400">Inga tillval</span>
-                      {% endif %}
-                    </a>
-                  </td>
-                  <td class="p-3 text-xs text-slate-500" data-sort-value="{{ b.created_at }}">
-                    <a class="block w-full h-full" href="{{ url_for('routes.booking_detail', booking_id=b.id) }}">{{ b.created_at }}</a>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     {% else %}
-      {{ ui.empty_state("Inga bokningar ännu.", theme='customer') }}
+      {{ ui.empty_state("Inga bokningar ännu. Välj datum på startsidan så ser du vad som är ledigt.", theme='customer') }}
     {% endif %}
 
     {% with page_obj=bookings_page %}

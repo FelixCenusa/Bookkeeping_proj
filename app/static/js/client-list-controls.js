@@ -37,6 +37,10 @@
   };
 
   const createPageButtonClassName = (variant, isActive) => {
+    if (variant === "customer") {
+      return isActive ? "sk-pager__btn sk-pager__btn--current" : "sk-pager__btn";
+    }
+
     if (isActive) {
       return "inline-flex min-w-10 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white";
     }

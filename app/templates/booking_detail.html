@@ -425,399 +425,308 @@
   {% endif %}
 </div>
 {% else %}
-<section class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(140deg,#fffdfd_0%,#ffffff_52%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-  <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-  <div class="absolute right-8 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-  <div class="absolute bottom-0 right-0 h-40 w-40 translate-x-1/4 translate-y-1/4 rounded-full bg-pink-100/30"></div>
-  <div class="relative px-6 py-8 md:px-8">
-    <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-      <div>
-        <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-          Bokningsöversikt
-        </div>
-        <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Bokning #{{ booking.id }}</h1>
-        <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 md:text-base">
-          Gå igenom datum, tjänster, bokade artiklar och aktuell totalsumma på ett ställe.
-        </p>
+{% set sk_status = booking.status if booking.status in ('confirmed', 'pending') else 'cancelled' %}
+{% set sk_has_summary_adjust = item_summary and (item_summary|selectattr('custom_total_price', 'ne', none)|list) %}
+{% set sk_has_item_adjust = items and (items|selectattr('custom_total_price', 'ne', none)|list) %}
+<section class="sk-pagehead">
+  <div class="sk-container">
+    <div class="sk-bookinghead">
+      <div class="min-w-0">
+        <p class="sk-bookinghead__id">Bokning #{{ booking.id }}</p>
+        <h1 class="sk-h1 mt-2">{{ booking.start_date|swedish_date_range(booking.end_date) or (booking.start_date ~ ' – ' ~ booking.end_date) }}</h1>
       </div>
-
-      {% if booking.status == 'confirmed' %}
-        <div class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">Status: Bekräftad</div>
-      {% elif booking.status == 'pending' %}
-        <div class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-sm font-medium text-orange-500">Status: Under behandling</div>
+      <span class="sk-status sk-status--lg sk-status--{{ sk_status }}">{% if sk_status == 'confirmed' %}Bekräftad{% elif sk_status == 'pending' %}Väntar på bekräftelse{% else %}Avbokad{% endif %}</span>
+    </div>
+    <p class="sk-lead mt-5">
+      {% if sk_status == 'confirmed' %}
+        Bokningen är bekräftad. Här ser du vad som ingår och vad det kostar.
+      {% elif sk_status == 'pending' %}
+        Det du valt är reserverat medan vi går igenom bokningen. Vi hör av oss när den är bekräftad.
       {% else %}
-        <div class="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-medium text-rose-700">Status: Avbokad</div>
+        Bokningen är avbokad.
       {% endif %}
-    </div>
-    </div>
-
-    <div class="mt-6 grid gap-3 md:grid-cols-4 p-3">
-      <div class="rounded-2xl border border-slate-200 bg-white p-4">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Kund</div>
-        <div class="mt-2 text-sm font-semibold text-slate-900">{{ booking.full_name }}</div>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-4">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Datum</div>
-        <div class="mt-2 text-sm font-semibold text-slate-900">{{ booking.start_date }} - {{ booking.end_date }}</div>
-      </div>
-      <div class="rounded-2xl border border-pink-100 bg-white p-4">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">E-post</div>
-        <div class="mt-2 text-sm font-semibold text-slate-900">{{ booking.email or "Ingen e-post" }}</div>
-      </div>
-      <div class="rounded-2xl border border-emerald-100 bg-white p-4">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Skapad</div>
-        <div class="mt-2 text-sm font-semibold text-slate-900">{{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at.strftime is defined else booking.created_at[:10] }}</div>
-      </div>
-    </div>
+    </p>
   </div>
 </section>
 
-<section class="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-  <div class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-    <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5">
-      <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Tjänster</div>
-      <h2 class="mt-1 text-2xl font-black text-slate-950">Bokningsval</h2>
-    </div>
+<section class="sk-section sk-section--flush-top">
+  <div class="sk-container sk-detail">
+    <div class="sk-detail__main">
+      <section class="sk-step" aria-labelledby="bokade-artiklar">
+        <header class="sk-step__bar sk-scallop sk-bg-teal">
+          <h2 class="sk-step__title" id="bokade-artiklar">Bokade artiklar</h2>
+        </header>
 
-    <div class="grid gap-4 px-6 py-6 md:grid-cols-2">
-      <div class="rounded-2xl border border-emerald-100 bg-emerald-50/35 p-4 text-sm text-slate-700">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Montering</div>
-        <div class="mt-2 text-base font-semibold text-slate-900">{{ "Ingår" if booking.include_setup_service else "Ingår inte" }}</div>
-      </div>
-
-      <div class="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-slate-700">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Leverans</div>
-        <div class="mt-2 text-base font-semibold text-slate-900">
-          {% if booking.include_delivery %}
-            Ingår{% if booking.delivery_fee is not none %} ({{ booking.delivery_fee }} kr){% endif %}
-          {% else %}
-            Ingår inte
-          {% endif %}
-        </div>
-        {% if booking.delivery_distance_km is not none %}
-          <div class="mt-2 text-sm text-slate-600">{{ booking.delivery_distance_km }} km rutt</div>
-        {% endif %}
-        {% if booking.delivery_address %}
-          <div class="mt-1 text-sm text-slate-600">{{ booking.delivery_address }}</div>
-        {% elif booking.address or booking.postal_city %}
-          <div class="mt-1 text-sm text-slate-600">
-            {{ booking.address or "" }}{% if booking.address and booking.postal_city %}, {% endif %}{{ booking.postal_city or "" }}
-          </div>
-        {% else %}
-          <div class="mt-1 text-sm text-slate-500">Ingen bokningsadress sparad.</div>
-        {% endif %}
-      </div>
-
-      <div class="rounded-2xl border border-emerald-100 bg-white p-4 text-sm text-slate-700">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Telefon</div>
-        <div class="mt-2 text-base font-semibold text-slate-900">{{ booking.phone or "Inget telefonnummer" }}</div>
-      </div>
-
-      <div class="rounded-2xl border border-pink-100 bg-white p-4 text-sm text-slate-700">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Bokningsadress</div>
-        <div class="mt-2 text-base font-semibold text-slate-900">
-          {% if booking.delivery_address %}
-            {{ booking.delivery_address }}
-          {% elif booking.address or booking.postal_city %}
-            {{ booking.address or "" }}{% if booking.address and booking.postal_city %}, {% endif %}{{ booking.postal_city or "" }}
-          {% else %}
-            Ingen bokningsadress sparad
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="rounded-2xl border border-pink-100 bg-white p-4 text-sm text-slate-700">
-        <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Bokningsanteckning</div>
-        <div class="mt-2 text-base font-semibold text-slate-900">{{ booking.booking_note or "Ingen anteckning tillagd" }}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="rounded-[2rem] border border-pink-100 bg-[linear-gradient(145deg,#fff9fc_0%,#ffffff_60%,#f7fff8_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-    <div class="border-b border-pink-100 px-6 py-5">
-      <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Totalt</div>
-      <h2 class="mt-1 text-2xl font-black text-slate-950">Kostnadssammanfattning</h2>
-    </div>
-
-    <div class="space-y-3 px-6 py-6 text-sm text-slate-700">
-      {% if cost_breakdown %}
-        <div class="flex items-center justify-between gap-4">
-          <span>Artiklar</span>
-          <span class="font-semibold text-slate-950">{{ cost_breakdown.item_count }} valda</span>
-        </div>
-        <div class="flex items-center justify-between gap-4">
-          <span>Hyra</span>
-          <span class="font-semibold text-slate-950">{{ cost_breakdown.rental_without_surcharge }} kr</span>
-        </div>
-        <div class="flex items-center justify-between gap-4">
-          <span>Montering</span>
-          <span class="font-semibold text-slate-950">
-            {% if booking.include_setup_service %}{{ cost_breakdown.setup_cost }} kr{% else %}Inte tillvalt{% endif %}
-          </span>
-        </div>
-        <div class="flex items-center justify-between gap-4">
-          <span>Leverans</span>
-          <span class="font-semibold text-slate-950">
-            {% if booking.include_delivery %}
-              {{ cost_breakdown.delivery_cost }} kr{% if booking.delivery_distance_km is not none %} ({{ booking.delivery_distance_km }} km){% endif %}
-            {% else %}
-              Inte tillvalt
-            {% endif %}
-          </span>
-        </div>
-        {% if cost_breakdown.show_furnishing_surcharge %}
-          <div>
-            <div class="flex items-center justify-between gap-4">
-              <span>Inredning utan tält (+25%)</span>
-              <span class="font-semibold text-slate-950">{{ cost_breakdown.furnishing_surcharge }} kr</span>
-            </div>
-            <div class="mt-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
-            </div>
-          </div>
-        {% endif %}
-        {% if cost_breakdown.show_vat_breakdown %}
-          <div class="flex items-center justify-between gap-4">
-            <span>Moms (25%)</span>
-            <span class="font-semibold text-slate-950">{{ cost_breakdown.vat_amount }} kr</span>
-          </div>
-        {% endif %}
-        {% if cost_breakdown.has_booking_override %}
-          <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-            <div class="font-medium">Prisjustering för bokningen: {{ cost_breakdown.booking_custom_total_price }} kr</div>
-            {% if cost_breakdown.booking_custom_price_note %}
-              <div class="mt-1 text-sm">{{ cost_breakdown.booking_custom_price_note }}</div>
-            {% endif %}
-          </div>
-        {% endif %}
-        <div class="border-t border-emerald-100 pt-3">
-          {% if cost_breakdown.show_vat_breakdown %}
-            <div class="mb-2 flex items-center justify-between gap-4 text-sm">
-              <span>Pris exkl. moms</span>
-              <span class="font-medium text-slate-900">{{ cost_breakdown.subtotal_ex_vat }} kr</span>
-            </div>
-          {% endif %}
-          <div class="flex items-center justify-between gap-4 text-base font-semibold">
-            <span>{% if cost_breakdown.show_vat_breakdown %}Totalt inkl. moms{% else %}Total{% endif %}</span>
-            <span class="text-rose-600">{{ cost_breakdown.total_cost }} kr</span>
-          </div>
-        </div>
-      {% else %}
-        <p class="text-sm text-slate-600"><i>Kunde inte räkna ut totalsumman.</i></p>
-      {% endif %}
-    </div>
-  </div>
-</section>
-
-{% if role != "admin" %}
-<section class="mt-6 rounded-[2rem] border border-amber-200 bg-amber-50/80 px-6 py-5 text-sm text-amber-900 shadow-[0_20px_50px_-38px_rgba(180,83,9,0.28)]">
-  <div class="text-xs font-medium uppercase tracking-[0.18em] text-amber-700">Avbokning</div>
-  <p class="mt-2 leading-6">
-    Om du vill avboka, kontakta oss via
-    <a href="mailto:kadaparty@kadaparty.se" class="font-semibold underline underline-offset-4">kadaparty@kadaparty.se</a>
-    eller p&aring;
-    <a href="tel:0730813710" class="font-semibold underline underline-offset-4">0730813710</a>.
-  </p>
-</section>
-{% endif %}
-
-<section class="mt-6 rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-  <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5">
-    <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Artiklar</div>
-    <h2 class="mt-1 text-2xl font-black text-slate-950">Bokade artiklar</h2>
-  </div>
-
-  <div class="px-6 py-6">
-    {% if item_summary %}
-      <div class="overflow-hidden rounded-[1.5rem] border border-slate-200">
-        <div class="border-b border-pink-100 bg-pink-50/55 px-4 py-3">
-          <h3 class="text-sm font-semibold text-slate-900">Sammanfattning</h3>
-          <p class="mt-1 text-sm text-slate-600">Vy över bokade artiklar.</p>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-[linear-gradient(90deg,#ec4899_0%,#f472b6_72%,#22c55e_140%)] text-white">
-              <tr>
-                <th class="p-3 text-left" data-sort-type="number">Antal</th>
-                <th class="p-3 text-left">Artikel</th>
-                <th class="p-3 text-left">Typ</th>
-                <th class="p-3 text-left">Hyresperiod</th>
-                <th class="p-3 text-left" data-sort-type="number">Grundpris</th>
-                <th class="p-3 text-left" data-sort-type="number">Montering</th>
-                <th class="p-3 text-left" data-sort-type="number">Justering</th>
-                <th class="p-3 text-left" data-sort-type="number">Summa</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 bg-white">
+        <div class="sk-step__body">
+          {% if item_summary %}
+            <ul class="sk-lines md:hidden" role="list">
               {% for row in item_summary %}
-                <tr class="align-top hover:bg-pink-50/30">
-                  <td class="p-3 font-medium">{{ row.quantity }}</td>
-                  <td class="p-3 font-medium" data-sort-value="{{ row.display_name }}">{{ row.display_name }}</td>
-                  <td class="p-3">
-                    {% if row.type_label == 'Tent' %}Tält{% elif row.type_label == 'Furnishing' %}Inredning{% else %}Artikel{% endif %}
-                  </td>
-                  <td class="p-3">
-                    {% if row.quoted_period_label %}
-                      {{ row.quoted_period_label }}
-                    {% else %}
-                      <span class="text-slate-400">-</span>
-                    {% endif %}
-                  </td>
-                  <td class="p-3">
-                    {% if row.quoted_period_price is not none %}
-                      {{ row.quoted_period_price }} kr
-                    {% else %}
-                      <span class="text-slate-400">-</span>
-                    {% endif %}
-                  </td>
-                  <td class="p-3">
-                    {% if booking.include_setup_service %}
-                      {{ row.effective_setup_fee }} kr
-                    {% else %}
-                      <span class="text-slate-400">Ingår inte</span>
-                    {% endif %}
-                  </td>
-                  <td class="p-3">
-                    {% if row.custom_total_price is not none %}
-                      <span class="font-medium text-amber-700">{{ row.custom_total_price }} kr</span>
-                    {% else %}
-                      <span class="text-slate-400">Ingen justering</span>
-                    {% endif %}
-                  </td>
-                  <td class="p-3 font-medium">{{ row.group_total }} kr</td>
-                </tr>
+                <li class="sk-line">
+                  <div class="min-w-0">
+                    <div class="sk-item__name">{{ row.quantity }} × {{ row.display_name }}</div>
+                    <div class="sk-item__sub">
+                      {% if row.quoted_period_label %}{{ row.quoted_period_label|replace('-', '–') }}{% endif %}{% if row.quoted_period_price is not none %}{{ ', ' if row.quoted_period_label else '' }}{{ row.quoted_period_price|sek }} st{% endif %}{% if booking.include_setup_service and row.effective_setup_fee %}, montering {{ row.effective_setup_fee|sek }}{% endif %}
+                    </div>
+                    {% if row.custom_total_price is not none %}<div class="sk-item__adjust">Justerat pris {{ row.custom_total_price|sek }}</div>{% endif %}
+                  </div>
+                  <div class="sk-line__sum sk-num">{{ row.group_total|sek }}</div>
+                </li>
               {% endfor %}
-            </tbody>
-          </table>
+            </ul>
+
+            <div class="hidden md:block">
+              <table class="sk-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Artikel</th>
+                    <th scope="col" data-sort-type="number">Antal</th>
+                    <th scope="col">Period</th>
+                    <th scope="col" data-sort-type="number">Pris</th>
+                    {% if booking.include_setup_service %}<th scope="col" data-sort-type="number">Montering</th>{% endif %}
+                    {% if sk_has_summary_adjust %}<th scope="col" data-sort-type="number">Justering</th>{% endif %}
+                    <th scope="col" data-sort-type="number" class="sk-table__end">Summa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in item_summary %}
+                    <tr>
+                      <td data-sort-value="{{ row.display_name }}"><span class="sk-item__name">{{ row.display_name }}</span></td>
+                      <td class="sk-num">{{ row.quantity }}</td>
+                      <td class="whitespace-nowrap">{% if row.quoted_period_label %}{{ row.quoted_period_label|replace('-', '–') }}{% else %}<span class="sk-muted">Ingen period</span>{% endif %}</td>
+                      <td class="sk-num whitespace-nowrap">{% if row.quoted_period_price is not none %}{{ row.quoted_period_price|sek }}{% else %}<span class="sk-muted">Inget pris</span>{% endif %}</td>
+                      {% if booking.include_setup_service %}<td class="sk-num whitespace-nowrap">{{ row.effective_setup_fee|sek }}</td>{% endif %}
+                      {% if sk_has_summary_adjust %}<td class="sk-num whitespace-nowrap">{% if row.custom_total_price is not none %}{{ row.custom_total_price|sek }}{% else %}<span class="sk-muted">Ingen</span>{% endif %}</td>{% endif %}
+                      <td class="sk-num whitespace-nowrap sk-table__end"><strong>{{ row.group_total|sek }}</strong></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            {{ ui.empty_state("Inga artiklar i bokningen.", theme='customer') }}
+          {% endif %}
+
+          {% if booking.custom_total_price is not none %}
+            <p class="sk-note sk-note--orange mt-5">Bokningen har ett överenskommet totalpris, så hyra, montering och leverans avgör inte slutpriset.</p>
+          {% endif %}
+
+          {% set tent_items = items | selectattr('is_tent') | list %}
+          {% if tent_items %}
+            <div class="sk-manuals">
+              <h3 class="sk-h3">Tältmanualer</h3>
+              <ul class="sk-manuals__list" role="list">
+                {% for it in tent_items %}
+                  <li>
+                    <div class="min-w-0">
+                      <div class="font-bold">{{ it.display_name }}</div>
+                      <div class="sk-tiny sk-muted break-all">{{ it.sku }}</div>
+                    </div>
+                    {% if it.has_manual_pdf %}
+                      <a class="sk-link sk-small whitespace-nowrap" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
+                    {% else %}
+                      <span class="sk-small sk-muted">Manual saknas</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <details class="sk-more group" data-client-list>
+            <summary>
+              <span>Alla artiklar, en rad per exemplar</span>
+              <span class="sk-more__state group-open:hidden">Visa</span>
+              <span class="sk-more__state hidden group-open:inline">Dölj</span>
+            </summary>
+
+            <div class="sk-tablewrap">
+              <table class="sk-table sk-table--compact">
+                <thead>
+                  <tr>
+                    <th scope="col">Artikel</th>
+                    <th scope="col">Period</th>
+                    <th scope="col" data-sort-type="number">Pris</th>
+                    {% if booking.include_setup_service %}<th scope="col" data-sort-type="number">Montering</th>{% endif %}
+                    {% if sk_has_item_adjust %}<th scope="col" data-sort-type="number">Justering</th>{% endif %}
+                    <th scope="col" data-sort-type="number" class="sk-table__end">Radsumma</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for it in items %}
+                    <tr data-client-list-item>
+                      <td data-sort-value="{{ it.display_name }}">
+                        <div class="font-bold">{{ it.display_name }}</div>
+                        <div class="sk-tiny sk-muted break-all">{{ it.sku }}</div>
+                        {% if it.line_note %}<div class="sk-tiny sk-muted mt-1">{{ it.line_note }}</div>{% endif %}
+                      </td>
+                      <td class="whitespace-nowrap">{% if it.quoted_period_label %}{{ it.quoted_period_label|replace('-', '–') }}{% else %}<span class="sk-muted">Ingen period</span>{% endif %}</td>
+                      <td class="sk-num whitespace-nowrap">{% if it.quoted_period_price is not none %}{{ it.quoted_period_price|sek }}{% else %}<span class="sk-muted">Inget pris</span>{% endif %}</td>
+                      {% if booking.include_setup_service %}<td class="sk-num whitespace-nowrap">{{ it.effective_setup_fee|sek }}</td>{% endif %}
+                      {% if sk_has_item_adjust %}
+                        <td class="sk-num">
+                          {% if it.custom_total_price is not none %}
+                            <span class="whitespace-nowrap">{{ it.custom_total_price|sek }}</span>
+                            {% if it.custom_price_note %}<div class="sk-tiny sk-muted mt-1">{{ it.custom_price_note }}</div>{% endif %}
+                          {% else %}
+                            <span class="sk-muted">Ingen</span>
+                          {% endif %}
+                        </td>
+                      {% endif %}
+                      <td class="sk-num whitespace-nowrap sk-table__end">{{ it.effective_line_total|sek }}</td>
+                    </tr>
+                  {% else %}
+                    <tr>
+                      <td colspan="6">Inga artiklar i bokningen.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {{ ui.client_pager(
+              variant='customer',
+              rows_label='Per sida',
+              previous_label='Föregående',
+              next_label='Nästa',
+              showing_label='Visar',
+              of_label='av',
+              class_name='',
+              default_per_page=10
+            ) }}
+          </details>
         </div>
-      </div>
-    {% endif %}
+      </section>
 
-    {% if booking.custom_total_price is not none %}
-      <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        Den här bokningen använder en total prisjustering, så hyra, montering och leverans avgör inte slutpriset.
-      </div>
-    {% endif %}
+      <section class="sk-step" aria-labelledby="leverans-och-uppgifter">
+        <header class="sk-step__bar sk-scallop sk-bg-orange">
+          <h2 class="sk-step__title" id="leverans-och-uppgifter">Leverans och uppgifter</h2>
+        </header>
 
-    {% set tent_items = items | selectattr('is_tent') | list %}
-    {% if tent_items %}
-      <div class="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-        <h3 class="text-sm font-semibold text-slate-900">Tältmanualer</h3>
-        <div class="mt-3 grid gap-3 md:grid-cols-2">
-          {% for it in tent_items %}
-            <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
-              <div class="font-medium text-slate-900">{{ it.display_name }}</div>
-              <div class="mt-1 text-xs text-slate-500">{{ it.sku }}</div>
-              {% if it.has_manual_pdf %}
-                <a class="mt-3 inline-flex text-sm font-medium text-sky-700 underline underline-offset-4" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">
-                  Öppna manual (PDF)
-                </a>
-              {% else %}
-                <div class="mt-3 text-xs text-amber-700">Ingen manual uppladdad för detta tält.</div>
+        <div class="sk-step__body">
+          <dl class="sk-dl">
+            <div>
+              <dt>Leverans</dt>
+              <dd>
+                {% if booking.include_delivery %}
+                  Ingår{% if booking.delivery_fee is not none %}, {{ booking.delivery_fee|sek }}{% endif %}{% if booking.delivery_distance_km is not none %} ({{ booking.delivery_distance_km }} km){% endif %}
+                {% else %}
+                  Ingår inte
+                {% endif %}
+              </dd>
+            </div>
+            <div>
+              <dt>Montering</dt>
+              <dd>{{ "Ingår" if booking.include_setup_service else "Ingår inte" }}</dd>
+            </div>
+            <div>
+              <dt>Adress</dt>
+              <dd>
+                {% if booking.delivery_address %}
+                  {{ booking.delivery_address }}
+                {% elif booking.address or booking.postal_city %}
+                  {{ booking.address or "" }}{% if booking.address and booking.postal_city %}, {% endif %}{{ booking.postal_city or "" }}
+                {% else %}
+                  Ingen adress sparad
+                {% endif %}
+              </dd>
+            </div>
+            <div>
+              <dt>Namn</dt>
+              <dd>{{ booking.full_name }}</dd>
+            </div>
+            <div>
+              <dt>E-post</dt>
+              <dd>{{ booking.email or "Ingen e-post" }}</dd>
+            </div>
+            <div>
+              <dt>Telefon</dt>
+              <dd>{{ booking.phone or "Inget telefonnummer" }}</dd>
+            </div>
+            <div>
+              <dt>Meddelande</dt>
+              <dd>{{ booking.booking_note or "Inget meddelande" }}</dd>
+            </div>
+            <div>
+              <dt>Skapad</dt>
+              <dd>{{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at.strftime is defined else booking.created_at[:10] }}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
+    <aside class="sk-detail__aside">
+      <section class="sk-step" aria-labelledby="kostnad">
+        <header class="sk-step__bar sk-scallop sk-bg-magenta-deep">
+          <h2 class="sk-step__title" id="kostnad">Kostnad</h2>
+        </header>
+
+        <div class="sk-step__body">
+          {% if cost_breakdown %}
+            <div class="sk-summary__rows">
+              <div class="sk-summary__row">
+                <span>Artiklar</span>
+                <span>{{ cost_breakdown.item_count }} st</span>
+              </div>
+              <div class="sk-summary__row">
+                <span>Hyra</span>
+                <span>{{ cost_breakdown.rental_without_surcharge|sek }}</span>
+              </div>
+              <div class="sk-summary__row">
+                <span>Montering</span>
+                <span>{% if booking.include_setup_service %}{{ cost_breakdown.setup_cost|sek }}{% else %}Inte tillvalt{% endif %}</span>
+              </div>
+              <div class="sk-summary__row">
+                <span>Leverans</span>
+                <span>{% if booking.include_delivery %}{{ cost_breakdown.delivery_cost|sek }}{% else %}Inte tillvalt{% endif %}</span>
+              </div>
+              {% if cost_breakdown.show_furnishing_surcharge %}
+                <div class="sk-summary__row">
+                  <span>Möbler utan tält (+25&nbsp;%)</span>
+                  <span>{{ cost_breakdown.furnishing_surcharge|sek }}</span>
+                </div>
+              {% endif %}
+              {% if cost_breakdown.show_vat_breakdown %}
+                <div class="sk-summary__row">
+                  <span>Moms (25&nbsp;%)</span>
+                  <span>{{ cost_breakdown.vat_amount|sek }}</span>
+                </div>
               {% endif %}
             </div>
-          {% endfor %}
+
+            {% if cost_breakdown.show_furnishing_surcharge %}
+              <p class="sk-note sk-note--orange mt-4">Bokningen innehåller inget tält, därför läggs 25&nbsp;% på möblerna.</p>
+            {% endif %}
+            {% if cost_breakdown.has_booking_override %}
+              <div class="sk-note sk-note--orange mt-4">
+                <strong>Överenskommet pris: {{ cost_breakdown.booking_custom_total_price|sek }}</strong>
+                {% if cost_breakdown.booking_custom_price_note %}<div class="mt-1">{{ cost_breakdown.booking_custom_price_note }}</div>{% endif %}
+              </div>
+            {% endif %}
+
+            {% if cost_breakdown.show_vat_breakdown %}
+              <div class="sk-summary__row sk-summary__row--plain">
+                <span>Pris exkl. moms</span>
+                <span>{{ cost_breakdown.subtotal_ex_vat|sek }}</span>
+              </div>
+            {% endif %}
+            <div class="sk-summary__total">
+              <span class="sk-summary__total-label">{% if cost_breakdown.show_vat_breakdown %}Totalt inkl. moms{% else %}Totalt{% endif %}</span>
+              <span class="sk-summary__total-value sk-num">{{ cost_breakdown.total_cost|sek }}</span>
+            </div>
+          {% else %}
+            <p class="m-0">Totalsumman kunde inte räknas ut. Ring oss så går vi igenom den.</p>
+          {% endif %}
         </div>
-      </div>
-    {% endif %}
+      </section>
 
-    <details class="mt-4 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white group" data-client-list>
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-900">
-        <span>Detaljerad artikellista</span>
-        <span class="text-slate-500 group-open:hidden">Visa</span>
-        <span class="hidden text-slate-500 group-open:inline">Dölj</span>
-      </summary>
-
-      <div class="border-t border-pink-100 overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-pink-50/55 text-slate-700">
-            <tr>
-              <th class="p-3 text-left">Artikel</th>
-              <th class="p-3 text-left">Typ</th>
-              <th class="p-3 text-left">Hyresperiod</th>
-              <th class="p-3 text-left" data-sort-type="number">Grundpris</th>
-              <th class="p-3 text-left" data-sort-type="number">Montering</th>
-              <th class="p-3 text-left" data-sort-type="number">Justering</th>
-              <th class="p-3 text-left" data-sort-type="number">Radsumma</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 bg-white">
-            {% for it in items %}
-              <tr class="align-top hover:bg-pink-50/25" data-client-list-item>
-                <td class="p-3" data-sort-value="{{ it.display_name }}">
-                  <div class="font-medium">{{ it.display_name }}</div>
-                  <div class="text-xs text-slate-500">{{ it.sku }}</div>
-                  {% if it.line_note %}
-                    <div class="mt-1 text-xs text-slate-500">{{ it.line_note }}</div>
-                  {% endif %}
-                </td>
-                <td class="p-3">
-                  {% if it.is_tent %}
-                    <span class="inline-flex rounded-full border border-pink-200 bg-pink-50 px-2 py-0.5 text-xs text-rose-500">Tält</span>
-                    <div class="mt-1 text-xs text-slate-500">
-                      Kapacitet: {{ it.capacity }}<br>
-                      Säsongsklass: {{ it.season_rating }}
-                    </div>
-                  {% endif %}
-                  {% if it.is_furnishing %}
-                    <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">Inredning</span>
-                    <div class="mt-1 text-xs text-slate-500">{{ it.furnishing_kind }}</div>
-                  {% endif %}
-                </td>
-                <td class="p-3">
-                  {% if it.quoted_period_label %}
-                    <div class="font-medium">{{ it.quoted_period_label }}</div>
-                  {% else %}
-                    <span class="text-slate-400">-</span>
-                  {% endif %}
-                </td>
-                <td class="p-3">
-                  {% if it.quoted_period_price is not none %}
-                    {{ it.quoted_period_price }} kr
-                  {% else %}
-                    <span class="text-slate-400">-</span>
-                  {% endif %}
-                </td>
-                <td class="p-3">
-                  {% if booking.include_setup_service %}
-                    {{ it.effective_setup_fee }} kr
-                  {% else %}
-                    <span class="text-slate-400">Ingår inte</span>
-                  {% endif %}
-                </td>
-                <td class="p-3">
-                  {% if it.custom_total_price is not none %}
-                    <div class="font-medium text-amber-700">{{ it.custom_total_price }} kr</div>
-                    {% if it.custom_price_note %}
-                      <div class="mt-1 text-xs text-slate-500">{{ it.custom_price_note }}</div>
-                    {% endif %}
-                  {% else %}
-                    <span class="text-slate-400">Ingen justering</span>
-                  {% endif %}
-                </td>
-                <td class="p-3 font-medium">{{ it.effective_line_total }} kr</td>
-              </tr>
-            {% else %}
-              <tr>
-                <td class="p-3" colspan="7"><i>Inga artiklar i bokningen.</i></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {{ ui.client_pager(
-        variant='customer',
-        rows_label='Rader',
-        previous_label='Föregående',
-        next_label='Nästa',
-        showing_label='Visar',
-        of_label='av',
-        class_name='m-4 mt-4',
-        default_per_page=10
-      ) }}
-    </details>
+      {% if role != "admin" %}
+        <div class="sk-cancel">
+          <h2 class="sk-h3">Vill du avboka?</h2>
+          <p class="mt-2">Ring <a class="sk-link" href="tel:0730813710">073-081 37 10</a> eller mejla <a class="sk-link" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>.</p>
+        </div>
+      {% endif %}
+    </aside>
   </div>
 </section>
 {% endif %}

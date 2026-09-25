@@ -1,4 +1,4 @@
-{% if page_obj and page_obj.total_items > 0 %}
+{% if role == 'admin' %}{% if page_obj and page_obj.total_items > 0 %}
   <div class="mt-6 flex flex-col gap-4 rounded-[1.5rem] px-4 py-4 md:flex-row md:items-center md:justify-between {% if role == 'admin' %}border border-slate-200 bg-slate-50{% else %}border border-slate-200 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.1)]{% endif %}">
     <div class="text-sm text-slate-600">
       {% if role == 'admin' %}
@@ -84,4 +84,53 @@
       {% endif %}
     </div>
   </div>
-{% endif %}
+{% endif %}{% else %}{% if page_obj and page_obj.total_items > 0 %}
+  <div class="sk-pager">
+    <p class="sk-pager__status">Visar {{ page_obj.start_index }}–{{ page_obj.end_index }} av {{ page_obj.total_items }}</p>
+
+    <div class="sk-pager__controls">
+      <form method="get" class="sk-pager__per" data-async-nav>
+        {% for key, value in request.args.items() %}
+          {% if key not in ("page", "per_page", "partial") %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+          {% endif %}
+        {% endfor %}
+        <input type="hidden" name="page" value="1">
+        <label for="per-page-select">Per sida</label>
+        <select id="per-page-select" name="per_page" class="sk-input" onchange="this.form.submit()">
+          {% for option in page_obj.per_page_options %}
+            <option value="{{ option }}" {% if option == page_obj.per_page %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      {% if page_obj.total_pages > 1 %}
+        <nav class="sk-pager__nav" aria-label="Sidnumrering">
+          {% if page_obj.has_prev %}
+            <a class="sk-pager__btn" href="{{ pagination_url(page=page_obj.prev_page) }}" data-async-nav>Föregående</a>
+          {% else %}
+            <span class="sk-pager__btn" aria-disabled="true">Föregående</span>
+          {% endif %}
+
+          {% for page_number in page_obj.iter_pages() %}
+            {% if page_number %}
+              {% if page_number == page_obj.page %}
+                <span class="sk-pager__btn sk-pager__btn--current" aria-current="page">{{ page_number }}</span>
+              {% else %}
+                <a class="sk-pager__btn" href="{{ pagination_url(page=page_number) }}" data-async-nav>{{ page_number }}</a>
+              {% endif %}
+            {% else %}
+              <span class="sk-pager__gap" aria-hidden="true">...</span>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a class="sk-pager__btn" href="{{ pagination_url(page=page_obj.next_page) }}" data-async-nav>Nästa</a>
+          {% else %}
+            <span class="sk-pager__btn" aria-disabled="true">Nästa</span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}{% endif %}
