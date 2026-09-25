@@ -9,6 +9,8 @@
 (function () {
   "use strict";
 
+  window.__prReady = true;
+
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   var hasIO = "IntersectionObserver" in window;
 

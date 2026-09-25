@@ -4,6 +4,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
   <script>
     document.documentElement.classList.add("pr-js");
+    // If planritning.js never boots, show the drawings without their entrance.
+    window.setTimeout(function () {
+      if (!window.__prReady) document.documentElement.classList.remove("pr-js");
+    }, 4000);
     if (window.tailwind) {
       window.tailwind.config = {
         theme: {

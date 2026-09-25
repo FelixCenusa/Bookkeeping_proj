@@ -141,6 +141,7 @@ body.pr-site {
 }
 
 .pr-site .pr-muted { color: var(--pr-ink-3); }
+.pr-site a[href^="tel:"] { white-space: nowrap; }
 .pr-site .pr-warn { color: var(--pr-wait); font-size: 14px; }
 .pr-site .pr-empty {
   padding: 20px 0;
@@ -340,8 +341,18 @@ body.pr-site {
 .pr-site .pr-nav__bar {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 16px;
   height: var(--pr-nav-h);
+}
+
+@media (min-width: 1024px) {
+  .pr-site .pr-nav__bar { gap: 40px; }
+}
+
+@media (max-width: 359px) {
+  .pr-site .pr-wrap { padding-inline: 16px; }
+  .pr-site .pr-nav__bar .pr-nav__logo img { height: 34px; }
+  .pr-site .pr-nav__bar .pr-nav__toggle { padding: 0 12px; }
 }
 
 .pr-site .pr-nav__logo {
@@ -1411,6 +1422,10 @@ body.pr-site {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 3px;
   padding-inline: 20px;
+}
+
+@media (min-width: 768px) {
+  .pr-site .pr-progress__steps { padding-inline: 32px; }
 }
 
 .pr-site .pr-progress__steps li { height: 3px; background: var(--pr-rule); transition: background-color 200ms ease; }
@@ -2805,6 +2820,36 @@ body.pr-site {
 /* ---------- Small pieces ---------- */
 
 .pr-site .pr-hero__plan { min-width: 0; }
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .pr-site .pr-hero__plan { max-width: 560px; }
+}
+
+/* ---------- Reduced motion: keep colour and opacity changes, drop movement ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-site .pr-btn,
+  .pr-site .pr-qa__icon::after,
+  .pr-site .pr-nav__toggle-icon span {
+    transition-property: background-color, border-color, color, opacity;
+  }
+
+  .pr-site .pr-btn:active:not(:disabled) { transform: none; }
+
+  .pr-js .pr-site .pr-mobilebar,
+  .pr-js .pr-site .pr-mobilebar.is-away { transform: none; }
+}
+
+@media print {
+  .pr-site .fp .fp-line,
+  .pr-site .ps-outline { stroke-dashoffset: 0 !important; }
+  .pr-site .fp .fp-fill,
+  .pr-site .fp .fp-grid,
+  .pr-site .fp .fp-dims,
+  .pr-site .ps-tent.is-on { opacity: 1 !important; }
+  .pr-site .pr-mobilebar,
+  .pr-site .pr-nav__menu { display: none !important; }
+}
 
 /* ---------- Flatpickr ---------- */
 
