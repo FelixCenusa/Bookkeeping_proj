@@ -22,9 +22,10 @@
 {#
   size='card'  catalog tile / booking detail: dimension lines + area label
   size='thumb' booking rows and cards: outline + grid only, text sits beside it
+  trim=true    card size, drops the empty sheet above a small tent (same scale)
   draw=true    stroke draws itself in when scrolled into view (planritning.js)
 #}
-{% macro footprint(dims, area=None, max_len=10, max_wid=6, size='card', draw=true, title=None) -%}
+{% macro footprint(dims, area=None, max_len=10, max_wid=6, size='card', draw=true, title=None, trim=false) -%}
 {%- set L = dims.length|float -%}
 {%- set W = dims.width|float -%}
 {%- set max_len = [max_len|float, L]|max -%}
@@ -39,6 +40,11 @@
 {%- set s = [avail_w / max_len, avail_h / max_wid]|min -%}
 {%- set w = L * s -%}
 {%- set h = W * s -%}
+{%- if trim and size != 'thumb' -%}
+  {#- Same scale, but the sheet ends just below the tent instead of at the widest tent. -#}
+  {%- set avail_h = h -%}
+  {%- set vb_h = (top + h + 34)|round(2) -%}
+{%- endif -%}
 {%- set yb = top + avail_h -%}
 {%- set y0 = yb - h -%}
 {%- set area_text = area if area else num(W * L) -%}
@@ -158,7 +164,6 @@
       <span class="pr-price__per">för {{ days_text(cheapest_price_row.min_days, cheapest_price_row.max_days) }}</span>
     </p>
     <div class="pr-pop" data-price-popover-root>
-      {% set price_option_count = c.all_period_prices|length + (1 if c.setup_service_fee else 0) %}
       <button
         type="button"
         data-price-popover-toggle
@@ -166,7 +171,6 @@
         class="pr-pop__toggle"
       >
         <span>Alla priser</span>
-        <span class="pr-pop__count pr-num">{{ price_option_count }}</span>
       </button>
 
       <div class="fixed z-[80] hidden pr-pop__panel" data-price-popover-panel>

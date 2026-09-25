@@ -1041,19 +1041,6 @@ body.pr-site {
   .pr-site .pr-pop__toggle:hover > span:first-child { text-decoration-thickness: 2px; }
 }
 
-.pr-site .pr-pop__count {
-  display: grid;
-  place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 3px;
-  background: var(--pr-baltic-tint);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--pr-baltic);
-}
-
 /* Popover panels are toggled with `hidden` and positioned `fixed` by JS. */
 .pr-site .pr-pop__panel {
   min-width: 248px;
@@ -1488,6 +1475,7 @@ body.pr-site {
 
 .pr-site .pr-booking__grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -1538,6 +1526,7 @@ body.pr-site {
   margin-top: 4px;
   font-size: 15px;
   color: var(--pr-ink-2);
+  overflow-wrap: anywhere;
 }
 
 .pr-site .pr-filter { margin-bottom: 18px; }
@@ -2612,18 +2601,41 @@ body.pr-site {
 
 .pr-site .pr-detail__h { margin-bottom: 14px; }
 
-.pr-site .pr-plan {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 1px 0 0 1px;
+.pr-site .pr-plan { border-top: 1px solid var(--pr-ink); }
+
+/* One tent per full-width row: drawing on the left, its numbers on the right. */
+.pr-site .pr-plan__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 36px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--pr-rule-2);
 }
 
-.pr-site .pr-plan__item {
-  flex: 0 1 290px;
-  margin: -1px 0 0 -1px;
-  padding: 16px 20px 18px 10px;
-  border: 1px solid var(--pr-rule-2);
+.pr-site .pr-plan__drawing { width: 100%; max-width: 240px; }
+
+@media (min-width: 560px) {
+  .pr-site .pr-plan__item {
+    grid-template-columns: 240px minmax(0, 1fr);
+    align-items: center;
+  }
 }
+
+.pr-site .pr-plan__text { min-width: 0; }
+
+.pr-site .pr-plan__spec { margin-top: 12px; }
+
+.pr-site .pr-plan__spec > div {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr);
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--pr-rule);
+  font-size: 15px;
+}
+
+.pr-site .pr-plan__spec dt { font-weight: 500; color: var(--pr-ink-2); }
+.pr-site .pr-plan__spec dd { margin: 0; }
 
 .pr-site .pr-detail__note {
   margin: -8px 0 14px;
@@ -2632,9 +2644,7 @@ body.pr-site {
 }
 
 .pr-site .pr-plan__name {
-  margin-top: 10px;
-  padding-left: 10px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -2645,6 +2655,55 @@ body.pr-site {
 .pr-site .pr-table--detail { min-width: 720px; }
 .pr-site .pr-td--name { font-weight: 600; }
 .pr-site .pr-td--strong { font-weight: 600; }
+
+/*
+  Phones: each booking row reads as a small card of label/value lines.
+  The <table> DOM and sort hooks stay; only cells change layout. Rows are
+  never given a display value (JS toggles them), so every cell becomes a
+  flex line and the browser wraps them in one anonymous table cell.
+*/
+@media (max-width: 767px) {
+  .pr-site .pr-table-wrap:has(.pr-table--stack) { overflow-x: visible; }
+  .pr-site .pr-table--stack { min-width: 0; }
+  /* Headers become the per-cell labels below; sorting stays a desktop tool. */
+  .pr-site .pr-table--stack thead { display: none; }
+  .pr-site .pr-table--stack .pr-td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 3px 0;
+    border-bottom: 0;
+    text-align: right;
+    white-space: normal;
+  }
+  .pr-site .pr-table--stack .pr-td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--pr-ink-2);
+    text-align: left;
+  }
+  .pr-site .pr-table--stack .pr-td--name {
+    padding-top: 14px;
+    padding-bottom: 6px;
+    text-align: left;
+    font-size: 16px;
+  }
+  .pr-site .pr-table--stack .pr-td--name { display: block; }
+  .pr-site .pr-table--stack .pr-td--name::before { content: none; }
+  /* The quantity column moves into the name line ("× 2"). */
+  .pr-site .pr-table--stack .pr-td--lead { display: none; }
+  .pr-site .pr-table--stack .pr-td:last-child {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--pr-rule-2);
+  }
+}
+
+@media (min-width: 768px) {
+  .pr-site .pr-stack-only { display: none; }
+}
 .pr-site .pr-adjusted { color: var(--pr-wait); font-weight: 500; }
 
 .pr-site .pr-manuals { border-top: 1px solid var(--pr-ink); }
@@ -2661,7 +2720,6 @@ body.pr-site {
 }
 
 .pr-site .pr-manuals__name { font-weight: 600; }
-.pr-site .pr-manuals__sku { font-size: 13.5px; color: var(--pr-ink-3); }
 
 .pr-site .pr-disclosure {
   border: 1px solid var(--pr-rule-2);

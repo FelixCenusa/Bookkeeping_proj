@@ -430,7 +430,8 @@
 {%- for row in (item_summary or []) -%}
   {%- if row.type_label == 'Tent' -%}
     {%- set d = row|tent_dimensions -%}
-    {%- if d -%}{%- set _ = pr_booked_tents.append({'row': row, 'd': d}) -%}{%- endif -%}
+    {%- set match = (items or [])|selectattr('display_name', 'equalto', row.display_name)|first -%}
+    {%- if d -%}{%- set _ = pr_booked_tents.append({'row': row, 'd': d, 'capacity': (match.capacity if match else None)}) -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
 <div class="pr-page pr-detail">
@@ -445,7 +446,7 @@
       {% if booking.status == 'confirmed' %}
         Vi har bekräftat bokningen.
       {% elif booking.status == 'pending' %}
-        Bokningen är väntande tills vi har bekräftat den. Under tiden är lagret reserverat.
+        Vi håller de bokade artiklarna en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.
       {% else %}
         Bokningen är avbokad.
       {% endif %}
@@ -461,8 +462,15 @@
           <ul class="pr-plan" role="list">
             {% for t in pr_booked_tents %}
               <li class="pr-plan__item">
-                <div class="pr-plan__drawing">{{ pr.footprint(t.d) }}</div>
-                <p class="pr-plan__name">{{ t.row.display_name }}{% if t.row.quantity and t.row.quantity > 1 %} <span class="pr-plan__qty pr-num">× {{ t.row.quantity }}</span>{% endif %}</p>
+                <div class="pr-plan__drawing">{{ pr.footprint(t.d, trim=true) }}</div>
+                <div class="pr-plan__text">
+                  <p class="pr-plan__name">{{ t.row.display_name }}{% if t.row.quantity and t.row.quantity > 1 %} <span class="pr-plan__qty pr-num">× {{ t.row.quantity }}</span>{% endif %}</p>
+                  <dl class="pr-plan__spec">
+                    <div><dt>Mått</dt><dd class="pr-num">{{ pr.num(t.d.width) }} × {{ pr.num(t.d.length) }} m</dd></div>
+                    <div><dt>Golvyta</dt><dd class="pr-num">{{ pr.area_of(t.row, t.d) }}&nbsp;m²</dd></div>
+                    {% if t.capacity %}<div><dt>Gäster</dt><dd>Upp till <span class="pr-num">{{ t.capacity }}</span></dd></div>{% endif %}
+                  </dl>
+                </div>
               </li>
             {% endfor %}
           </ul>
@@ -473,7 +481,7 @@
         <h2 class="pr-h3 pr-detail__h" id="items-title">Bokade artiklar</h2>
         {% if item_summary %}
           <div class="pr-table-wrap">
-            <table class="pr-table pr-table--detail">
+            <table class="pr-table pr-table--detail pr-table--stack">
               <thead>
                 <tr>
                   <th class="pr-th pr-th--num" data-sort-type="number">Antal</th>
@@ -489,14 +497,14 @@
               <tbody>
                 {% for row in item_summary %}
                   <tr>
-                    <td class="pr-td pr-td--num pr-num">{{ row.quantity }}</td>
-                    <td class="pr-td pr-td--name" data-sort-value="{{ row.display_name }}">{{ row.display_name }}</td>
-                    <td class="pr-td">{% if row.type_label == 'Tent' %}Tält{% elif row.type_label == 'Furnishing' %}Inredning{% else %}Artikel{% endif %}</td>
-                    <td class="pr-td">{% if row.quoted_period_label %}{{ row.quoted_period_label|replace('-', '–') }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
-                    <td class="pr-td pr-td--num pr-num">{% if row.quoted_period_price is not none %}{{ row.quoted_period_price|sek }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
-                    <td class="pr-td pr-td--num pr-num">{% if booking.include_setup_service %}{{ row.effective_setup_fee|sek }}{% else %}<span class="pr-muted">Ingår inte</span>{% endif %}</td>
-                    <td class="pr-td pr-td--num pr-num">{% if row.custom_total_price is not none %}<span class="pr-adjusted">{{ row.custom_total_price|sek }}</span>{% else %}<span class="pr-muted">Ingen</span>{% endif %}</td>
-                    <td class="pr-td pr-td--num pr-num pr-td--strong">{{ row.group_total|sek }}</td>
+                    <td class="pr-td pr-td--num pr-num pr-td--lead" data-label="Antal">{{ row.quantity }}</td>
+                    <td class="pr-td pr-td--name" data-sort-value="{{ row.display_name }}">{{ row.display_name }}{% if row.quantity and row.quantity > 1 %}<span class="pr-stack-only pr-num"> × {{ row.quantity }}</span>{% endif %}</td>
+                    <td class="pr-td" data-label="Typ">{% if row.type_label == 'Tent' %}Tält{% elif row.type_label == 'Furnishing' %}Inredning{% else %}Artikel{% endif %}</td>
+                    <td class="pr-td" data-label="Hyresperiod">{% if row.quoted_period_label %}{{ row.quoted_period_label|replace('-', '–') }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
+                    <td class="pr-td pr-td--num pr-num" data-label="Grundpris">{% if row.quoted_period_price is not none %}{{ row.quoted_period_price|sek }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
+                    <td class="pr-td pr-td--num pr-num" data-label="Montering">{% if booking.include_setup_service %}{{ row.effective_setup_fee|sek }}{% else %}<span class="pr-muted">Inte tillvalt</span>{% endif %}</td>
+                    <td class="pr-td pr-td--num pr-num" data-label="Justering">{% if row.custom_total_price is not none %}<span class="pr-adjusted">{{ row.custom_total_price|sek }}</span>{% else %}<span class="pr-muted">Ingen</span>{% endif %}</td>
+                    <td class="pr-td pr-td--num pr-num pr-td--strong" data-label="Summa">{{ row.group_total|sek }}</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -511,22 +519,15 @@
         {% endif %}
       </section>
 
-      {% set tent_items = items | selectattr('is_tent') | list %}
+      {% set tent_items = items | selectattr('is_tent') | selectattr('has_manual_pdf') | unique(attribute='display_name') | list %}
       {% if tent_items %}
         <section class="pr-detail__block" aria-labelledby="manuals-title">
           <h2 class="pr-h3 pr-detail__h" id="manuals-title">Tältmanualer</h2>
           <ul class="pr-manuals" role="list">
             {% for it in tent_items %}
               <li class="pr-manuals__row">
-                <div>
-                  <p class="pr-manuals__name">{{ it.display_name }}</p>
-                  <p class="pr-manuals__sku">{{ it.sku }}</p>
-                </div>
-                {% if it.has_manual_pdf %}
-                  <a class="pr-link" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
-                {% else %}
-                  <span class="pr-muted">Ingen manual uppladdad</span>
-                {% endif %}
+                <p class="pr-manuals__name">{{ it.display_name }}</p>
+                <a class="pr-link" href="{{ url_for('routes.item_manual_download', item_id=it.item_id) }}" target="_blank" rel="noopener">Öppna manual (PDF)</a>
               </li>
             {% endfor %}
           </ul>
@@ -541,7 +542,7 @@
         </summary>
 
         <div class="pr-table-wrap pr-disclosure__body">
-          <table class="pr-table pr-table--detail">
+          <table class="pr-table pr-table--detail pr-table--stack">
             <thead>
               <tr>
                 <th class="pr-th">Artikel</th>
@@ -558,31 +559,27 @@
                 <tr data-client-list-item>
                   <td class="pr-td pr-td--name" data-sort-value="{{ it.display_name }}">
                     <div class="pr-item__name">{{ it.display_name }}</div>
-                    <div class="pr-item__sub">{{ it.sku }}</div>
+                    <div class="pr-item__sub">Artikelnummer {{ it.sku }}</div>
                     {% if it.line_note %}<div class="pr-item__sub">{{ it.line_note }}</div>{% endif %}
                   </td>
-                  <td class="pr-td">
+                  <td class="pr-td" data-label="Typ">
                     {% if it.is_tent %}
-                      <div>Tält</div>
-                      <div class="pr-item__sub">Kapacitet {{ it.capacity }}<br>Säsongsklass {{ it.season_rating }}</div>
-                    {% endif %}
-                    {% if it.is_furnishing %}
+                      <div>Tält{% if it.capacity %}<div class="pr-item__sub">Upp till <span class="pr-num">{{ it.capacity }}</span> gäster</div>{% endif %}</div>
+                    {% elif it.is_furnishing %}
                       <div>Inredning</div>
-                      <div class="pr-item__sub">{{ it.furnishing_kind }}</div>
                     {% endif %}
                   </td>
-                  <td class="pr-td">{% if it.quoted_period_label %}{{ it.quoted_period_label|replace('-', '–') }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
-                  <td class="pr-td pr-td--num pr-num">{% if it.quoted_period_price is not none %}{{ it.quoted_period_price|sek }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
-                  <td class="pr-td pr-td--num pr-num">{% if booking.include_setup_service %}{{ it.effective_setup_fee|sek }}{% else %}<span class="pr-muted">Ingår inte</span>{% endif %}</td>
-                  <td class="pr-td pr-td--num pr-num">
+                  <td class="pr-td" data-label="Hyresperiod">{% if it.quoted_period_label %}{{ it.quoted_period_label|replace('-', '–') }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
+                  <td class="pr-td pr-td--num pr-num" data-label="Grundpris">{% if it.quoted_period_price is not none %}{{ it.quoted_period_price|sek }}{% else %}<span class="pr-muted">Saknas</span>{% endif %}</td>
+                  <td class="pr-td pr-td--num pr-num" data-label="Montering">{% if booking.include_setup_service %}{{ it.effective_setup_fee|sek }}{% else %}<span class="pr-muted">Inte tillvalt</span>{% endif %}</td>
+                  <td class="pr-td pr-td--num pr-num" data-label="Justering">
                     {% if it.custom_total_price is not none %}
-                      <span class="pr-adjusted">{{ it.custom_total_price|sek }}</span>
-                      {% if it.custom_price_note %}<div class="pr-item__sub">{{ it.custom_price_note }}</div>{% endif %}
+                      <div><span class="pr-adjusted">{{ it.custom_total_price|sek }}</span>{% if it.custom_price_note %}<div class="pr-item__sub">{{ it.custom_price_note }}</div>{% endif %}</div>
                     {% else %}
                       <span class="pr-muted">Ingen</span>
                     {% endif %}
                   </td>
-                  <td class="pr-td pr-td--num pr-num pr-td--strong">{{ it.effective_line_total|sek }}</td>
+                  <td class="pr-td pr-td--num pr-num pr-td--strong" data-label="Radsumma">{{ it.effective_line_total|sek }}</td>
                 </tr>
               {% else %}
                 <tr>
@@ -616,11 +613,11 @@
             <div class="pr-receipt__row flex"><span>Montering</span><span class="pr-num">{% if booking.include_setup_service %}{{ cost_breakdown.setup_cost|sek }}{% else %}Inte tillvalt{% endif %}</span></div>
             <div class="pr-receipt__row flex"><span>Leverans</span><span class="pr-num">{% if booking.include_delivery %}{{ cost_breakdown.delivery_cost|sek }}{% if booking.delivery_distance_km is not none %}<span class="pr-receipt__fine">{{ booking.delivery_distance_km }} km</span>{% endif %}{% else %}Inte tillvalt{% endif %}</span></div>
             {% if cost_breakdown.show_furnishing_surcharge %}
-              <div class="pr-receipt__row flex"><span>Inredning utan tält (+25%)</span><span class="pr-num">{{ cost_breakdown.furnishing_surcharge|sek }}</span></div>
-              <p class="pr-alert pr-alert--wait">Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.</p>
+              <div class="pr-receipt__row flex"><span>Inredning utan tält (+25&nbsp;%)</span><span class="pr-num">{{ cost_breakdown.furnishing_surcharge|sek }}</span></div>
+              <p class="pr-alert pr-alert--wait">Bokningen innehåller inget tält, därför läggs ett tillägg på 25&nbsp;% på all inredning.</p>
             {% endif %}
             {% if cost_breakdown.show_vat_breakdown %}
-              <div class="pr-receipt__row flex"><span>Moms (25%)</span><span class="pr-num">{{ cost_breakdown.vat_amount|sek }}</span></div>
+              <div class="pr-receipt__row flex"><span>Moms (25&nbsp;%)</span><span class="pr-num">{{ cost_breakdown.vat_amount|sek }}</span></div>
             {% endif %}
             {% if cost_breakdown.has_booking_override %}
               <div class="pr-alert pr-alert--wait">
@@ -652,7 +649,7 @@
           <div class="pr-facts__row">
             <dt>Leverans</dt>
             <dd>
-              {% if booking.include_delivery %}Ja{% if booking.delivery_fee is not none %}, <span class="pr-num">{{ booking.delivery_fee|sek }}</span>{% endif %}{% if booking.delivery_distance_km is not none %} för <span class="pr-num">{{ booking.delivery_distance_km }}</span> km{% endif %}{% else %}Nej, ni hämtar själva{% endif %}
+              {% if booking.include_delivery %}Tillvalt{% if booking.delivery_fee is not none %}, <span class="pr-num">{{ booking.delivery_fee|sek }}</span>{% endif %}{% if booking.delivery_distance_km is not none %} för <span class="pr-num">{{ booking.delivery_distance_km }}</span> km{% endif %}{% else %}Inte tillvalt. Du hämtar själv.{% endif %}
             </dd>
           </div>
           <div class="pr-facts__row">
@@ -667,7 +664,7 @@
               {% endif %}
             </dd>
           </div>
-          <div class="pr-facts__row"><dt>Montering</dt><dd>{{ "Ja" if booking.include_setup_service else "Nej" }}</dd></div>
+          <div class="pr-facts__row"><dt>Montering</dt><dd>{{ "Tillvalt" if booking.include_setup_service else "Inte tillvalt" }}</dd></div>
           <div class="pr-facts__row"><dt>Meddelande</dt><dd>{{ booking.booking_note or "Inget meddelande" }}</dd></div>
           <div class="pr-facts__row"><dt>Skapad</dt><dd class="pr-num">{{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at.strftime is defined else booking.created_at[:10] }}</dd></div>
         </dl>
