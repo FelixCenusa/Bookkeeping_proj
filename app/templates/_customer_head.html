@@ -14,5 +14,14 @@
           sessionStorage.setItem("kv-lit", "1");
         }
       } catch (error) {}
+      // Load-in and scroll reveals. Content starts hidden only when motion is welcome, and
+      // never for longer than 2 s: kvallsljus.js takes over (or gives up) well before that.
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce) {
+        root.classList.add("kv-motion");
+        window.setTimeout(function () {
+          root.classList.remove("kv-motion");
+        }, 2000);
+      }
     })();
   </script>

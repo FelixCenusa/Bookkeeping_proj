@@ -451,6 +451,30 @@ html.kv-html {
   }
 }
 
+/* The wave: every few seconds a brighter flare runs across the lit bulbs, left to right.
+   kvallsljus.js adds one .kv-flare per bulb and animates its opacity only; at rest it is 0. */
+.kv-flare {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 248, 232, 0.95) 0 9%, rgba(255, 224, 168, 0.5) 22%, rgba(242, 179, 91, 0.16) 44%, transparent 68%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Load-in and scroll reveals. Hidden only while html.kv-motion is set: the head script sets it
+   when motion is welcome, kvallsljus.js hands over to inline styles (or drops it if Motion is
+   missing), and a 2 s timeout drops it regardless. Opacity only, so layout never moves. */
+html.kv-motion [data-kv-load],
+html.kv-motion [data-reveal],
+html.kv-motion [data-reveal-list] > * {
+  opacity: 0;
+}
+
 @keyframes kv-bulb-on {
   0% {
     opacity: 0;

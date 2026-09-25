@@ -9,10 +9,140 @@
   /* ---------- Festoon: pin the lit state once the string has lit up ---------- */
   // After the last bulb is on, html.kv-lit removes the animation, so a later restyle
   // (resizing across a breakpoint, a re-render) can never replay it.
+  const litCallbacks = [];
+  const whenLit = (callback) => {
+    if (root.classList.contains("kv-lit")) callback();
+    else litCallbacks.push(callback);
+  };
   if (!root.classList.contains("kv-lit")) {
     const indexes = Array.from(document.querySelectorAll(".kv-bulb"), (bulb) => Number(bulb.style.getPropertyValue("--i")) || 0);
     const last = indexes.length ? Math.max(...indexes) : 0;
-    window.setTimeout(() => root.classList.add("kv-lit"), reduceMotion.matches ? 0 : 360 + last * 105 + 900);
+    window.setTimeout(() => {
+      root.classList.add("kv-lit");
+      litCallbacks.splice(0).forEach((callback) => callback());
+    }, reduceMotion.matches ? 0 : 360 + last * 105 + 900);
+  }
+
+  /* ---------- Motion: hero load-in, scroll reveals, festoon wave ---------- */
+  // Uses Motion (motion.dev) from the CDN when it loaded. Without it, or with reduced motion,
+  // everything is simply shown in its final state and the bulbs stay lit.
+  const Motion = window.Motion;
+  const motionReady = Boolean(Motion && Motion.animate && Motion.inView && Motion.stagger);
+  const revealing = motionReady && !reduceMotion.matches && root.classList.contains("kv-motion");
+  const easeOut = [0.23, 1, 0.32, 1];
+
+  // Once an element has arrived, drop every inline trace so nothing keeps a transform,
+  // will-change or opacity layer (price popovers are position: fixed inside some of them).
+  const settle = (el) => {
+    el.style.opacity = "";
+    el.style.transform = "";
+    el.style.willChange = "";
+  };
+  // Motion writes the final keyframe once more on the frame after `finished`, so clear after that.
+  const whenDone = (controls, els) => {
+    const done = () => window.requestAnimationFrame(() => window.requestAnimationFrame(() => els.forEach(settle)));
+    controls.finished.then(done, done);
+  };
+
+  // opacity plus a small rise, or opacity only for anything a person may click straight away
+  const arrive = (els, { rise = 0, delay = 0, duration = 0.6 } = {}) => {
+    const keyframes = rise ? { opacity: [0, 1], transform: [`translateY(${rise}px)`, "translateY(0px)"] } : { opacity: [0, 1] };
+    whenDone(Motion.animate(els, keyframes, { duration, delay, ease: easeOut }), els);
+  };
+
+  if (revealing) {
+    // Hero: heading, lede, then the date panel, within about 0.8 s. The panel only fades, so the
+    // date fields sit still and take clicks from the first frame.
+    const hero = Array.from(document.querySelectorAll("[data-kv-load]"));
+    hero.forEach((el, index) => {
+      el.style.opacity = "0";
+      const fade = el.dataset.kvLoad === "fade";
+      arrive([el], { rise: fade ? 0 : 12, delay: 0.08 + index * 0.09, duration: fade ? 0.5 : 0.6 });
+    });
+
+    // Section headings and photos, once each as they scroll into view.
+    const singles = Array.from(document.querySelectorAll("[data-reveal]"));
+    singles.forEach((el) => {
+      el.style.opacity = "0";
+    });
+    Motion.inView(singles, (el) => {
+      arrive([el], { rise: el.dataset.reveal === "fade" ? 0 : 14, duration: el.dataset.reveal === "fade" ? 0.9 : 0.6 });
+    }, { margin: "0px 0px -8% 0px" });
+
+    // Lists (the tent menu): items that come into view together fade in one after another.
+    // Opacity only, each row holds a price popover.
+    const items = Array.from(document.querySelectorAll("[data-reveal-list] > *"));
+    items.forEach((el) => {
+      el.style.opacity = "0";
+    });
+    let batch = [];
+    const flushBatch = () => {
+      const els = batch;
+      batch = [];
+      whenDone(Motion.animate(els, { opacity: [0, 1] }, { duration: 0.5, delay: Motion.stagger(0.06), ease: easeOut }), els);
+    };
+    Motion.inView(items, (el) => {
+      if (!batch.length) window.requestAnimationFrame(flushBatch);
+      batch.push(el);
+    }, { margin: "0px 0px -6% 0px" });
+  }
+  // Inline styles now hold whatever is still waiting, so the class can go. Anything the booking
+  // script renders later is never hidden.
+  root.classList.remove("kv-motion");
+
+  if (motionReady && !reduceMotion.matches) {
+    whenLit(() => {
+      const festoons = Array.from(document.querySelectorAll(".kv-festoon"));
+      if (!festoons.length) return;
+      festoons.forEach((festoon) => {
+        festoon.querySelectorAll(".kv-bulb").forEach((bulb) => {
+          const flare = document.createElement("b");
+          flare.className = "kv-flare";
+          bulb.appendChild(flare);
+        });
+      });
+
+      // A slow wave, left to right: each bulb brightens and settles back. Runs every ~4.5 s,
+      // only for strings on screen and only while the tab is visible.
+      const WAVE_EVERY = 4500;
+      const visible = new Set();
+      let timer = 0;
+      const stop = () => {
+        window.clearTimeout(timer);
+        timer = 0;
+      };
+      const wave = (festoon) => {
+        const flares = Array.from(festoon.querySelectorAll(".kv-flare"));
+        Motion.animate(flares, { opacity: [0, 0.8, 0] }, {
+          duration: 1.2,
+          times: [0, 0.3, 1],
+          ease: [easeOut, "easeInOut"],
+          delay: Motion.stagger(0.05),
+        });
+      };
+      const tick = () => {
+        timer = 0;
+        if (document.hidden || !visible.size) return;
+        visible.forEach(wave);
+        timer = window.setTimeout(tick, WAVE_EVERY);
+      };
+      const start = (after) => {
+        if (!timer && !document.hidden && visible.size) timer = window.setTimeout(tick, after);
+      };
+
+      Motion.inView(festoons, (festoon) => {
+        visible.add(festoon);
+        start(1600);
+        return () => {
+          visible.delete(festoon);
+          if (!visible.size) stop();
+        };
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stop();
+        else start(1600);
+      });
+    });
   }
 
   /* ---------- Mobile menu: close on outside click, Escape and link tap ---------- */
