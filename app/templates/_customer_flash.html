@@ -1,0 +1,9 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="pr-wrap pr-flashes" role="status">
+      {% for category, message in messages %}
+        <p class="pr-flash {% if category == 'success' %}pr-flash--ok{% else %}pr-flash--stop{% endif %}">{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}

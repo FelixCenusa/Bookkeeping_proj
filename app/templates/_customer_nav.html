@@ -1,0 +1,55 @@
+{% set _path = request.path %}
+{% set _logged_in = session.get('user_id') %}
+<header class="pr-nav">
+  <div class="pr-wrap pr-nav__bar">
+    <a class="pr-nav__logo" href="{{ url_for('routes.home') }}" aria-label="KADA PartyTillbehör, till bokningen">
+      <img src="{{ customer_logo_url }}" alt="KADA PartyTillbehör" width="1524" height="319">
+    </a>
+
+    <nav class="pr-nav__links" aria-label="Huvudmeny">
+      <a href="{{ url_for('routes.home') }}"{% if _path == '/' %} aria-current="page"{% endif %}>Boka</a>
+      <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>FAQ</a>
+      <a href="{{ url_for('routes.about') }}"{% if _path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
+    </nav>
+
+    <div class="pr-nav__account">
+      {% if _logged_in %}
+        <a class="pr-nav__plain" href="{{ url_for('routes.customers') }}"{% if _path.startswith('/customers') %} aria-current="page"{% endif %}>Min profil</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+          <button class="pr-btn pr-btn--line pr-btn--sm" type="submit">Logga ut</button>
+        </form>
+      {% else %}
+        <a class="pr-nav__plain" href="{{ url_for('auth.login_form') }}"{% if _path == '/auth/login' %} aria-current="page"{% endif %}>Logga in</a>
+        <a class="pr-btn pr-btn--line pr-btn--sm" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+      {% endif %}
+    </div>
+
+    <details class="pr-nav__menu" data-pr-menu>
+      <summary class="pr-nav__toggle" data-nav-toggle aria-label="Öppna menyn">
+        <span class="pr-nav__toggle-label">Meny</span>
+        <span class="pr-nav__toggle-icon" aria-hidden="true"><span></span><span></span></span>
+      </summary>
+      <div class="pr-nav__panel">
+        <nav aria-label="Meny">
+          <a href="{{ url_for('routes.home') }}"{% if _path == '/' %} aria-current="page"{% endif %}>Boka</a>
+          <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>FAQ</a>
+          <a href="{{ url_for('routes.about') }}"{% if _path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
+          {% if _logged_in %}
+            <a href="{{ url_for('routes.customers') }}"{% if _path.startswith('/customers') %} aria-current="page"{% endif %}>Min profil</a>
+          {% else %}
+            <a href="{{ url_for('auth.login_form') }}"{% if _path == '/auth/login' %} aria-current="page"{% endif %}>Logga in</a>
+          {% endif %}
+        </nav>
+        {% if _logged_in %}
+          <form method="post" action="{{ url_for('auth.logout') }}" class="pr-nav__panel-action">
+            <button class="pr-btn pr-btn--line pr-btn--block" type="submit">Logga ut</button>
+          </form>
+        {% else %}
+          <div class="pr-nav__panel-action">
+            <a class="pr-btn pr-btn--line pr-btn--block" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+          </div>
+        {% endif %}
+      </div>
+    </details>
+  </div>
+</header>

@@ -1,0 +1,35 @@
+
+<footer class="pr-footer">
+  <div class="pr-wrap">
+    <div class="pr-footer__block">
+      <div class="pr-footer__cell pr-footer__cell--brand">
+        <p class="pr-footer__name">KADA PartyTillbehör</p>
+        <p class="pr-footer__text">Partytält, bord, stolar och ljusslingor att hyra i Karlshamn och övriga Blekinge.</p>
+      </div>
+      <div class="pr-footer__cell">
+        <p class="pr-footer__label">Adress</p>
+        <address class="pr-footer__text">Östersjövägen 45<br>374 31 Karlshamn</address>
+      </div>
+      <div class="pr-footer__cell">
+        <p class="pr-footer__label">Kontakt</p>
+        <p class="pr-footer__text">
+          <a href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a><br>
+          <a href="tel:0730813710" class="pr-num">073-081 37 10</a>
+        </p>
+      </div>
+      <nav class="pr-footer__cell" aria-label="Sidfot">
+        <p class="pr-footer__label">Sidor</p>
+        <ul class="pr-footer__links">
+          <li><a href="{{ url_for('routes.home') }}">Boka</a></li>
+          <li><a href="{{ url_for('routes.faq') }}">Vanliga frågor</a></li>
+          <li><a href="{{ url_for('routes.about') }}">Om oss</a></li>
+          <li><a href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}" target="_blank" rel="noopener noreferrer">Hyresvillkor (PDF)</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="pr-footer__base">
+      <span>Upptagningsområde: Karlshamn och övriga Blekinge</span>
+      <span>KADA PartyTillbehör</span>
+    </div>
+  </div>
+</footer>
