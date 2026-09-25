@@ -12,90 +12,52 @@
 {% endblock %}
 
 {% block content %}
-<section class="mx-auto max-w-6xl">
-  <div class="flex flex-col gap-4 lg:flex-row">
-    <div class="relative min-w-0 flex-1 overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_50%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-      <div class="absolute -left-12 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="absolute right-8 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-      <div class="absolute bottom-0 right-0 h-40 w-40 translate-x-1/4 translate-y-1/4 rounded-full bg-pink-100/55"></div>
+{% import "_customer_festoon.html" as kv %}
+{% set lead_days = public_booking_lead_days|default(0) %}
+<section class="kv-hero{% if has_selected_dates %} kv-hero--compact{% endif %}" aria-labelledby="kv-hero-title">
+  <div class="kv-hero-media">
+    <img
+      src="{{ url_for('static', filename='img/kvallsljus/hero-night-tent-festoon-1920.jpg') }}"
+      srcset="{{ url_for('static', filename='img/kvallsljus/hero-night-tent-festoon-1200.jpg') }} 1200w, {{ url_for('static', filename='img/kvallsljus/hero-night-tent-festoon-1920.jpg') }} 1920w"
+      sizes="100vw"
+      width="1920"
+      height="1280"
+      alt="Ett upplyst festtält en sommarkväll, med en ljusslinga längs gräsmattan och månen på himlen"
+      fetchpriority="high"
+      decoding="async"
+    >
+  </div>
+  <div class="kv-hero-scrim"></div>
+  <div class="hidden md:block">{{ kv.festoon(sags=5, per_sag=3, depth=46, top=4) }}</div>
+  <div class="md:hidden">{{ kv.festoon(sags=3, per_sag=3, depth=30, top=4) }}</div>
 
-      <div class="relative px-4 py-8 md:px-5">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-            KADA PartyTillbehör
-          </div>
-
-          <h1 class="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
-            Sök bland våra artiklar och boka direkt.
-          </h1>
-
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 md:text-base">
-            Här visas alla artiklar med standardpris och tillgänglighet. Tält kan hyras ut från 3 till 7 dagar, om ni behöver hyra längre kontakta oss på:
-            <a
-              href="mailto:kadaparty@kadaparty.se"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              kadaparty@kadaparty.se
-            </a>
-            eller via telefon:
-            <a
-              href="tel:0730813710"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              0730813710
-            </a>
-          </p>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700">
-            KADA PartyTillbeh&#246;r erbjuder t&#228;ltuthyrning, partyt&#228;lt och festutrustning f&#246;r party och fest i Karlshamn och &#246;vriga Blekinge.
-          </p>
-        </div>
-
-        <div class="mt-5 grid gap-3 sm:grid-cols-[28%_29%_40%]">
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Tillgänglighet</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Boka nu och få det levererat och monterat till festen</div>
-          </div>
-
-          <div class="rounded-2xl border border-pink-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Priser</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">De bästa priserna i Blekinge</div>
-          </div>
-
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Leverans</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Vi erbjuder också leverans ända fram! Bara lägg till leverans i kundvagnen så räknar vi priset åt dig!</div>
-          </div>
-        </div>
-      </div>
+  <div class="kv-wrap kv-hero-body">
+    <div>
+      {% if has_selected_dates %}
+        <h1 id="kv-hero-title" class="kv-display text-[2.3rem] md:text-[3.1rem]">Boka tält och tillbehör</h1>
+      {% else %}
+        <h1 id="kv-hero-title" class="kv-display max-w-[15ch] text-[2.55rem] md:text-[4.1rem] lg:text-[4.6rem]">
+          Ett tält, några ljusslingor och plats för alla.
+        </h1>
+        <p class="mt-5 max-w-[46ch] text-[1.075rem] leading-relaxed text-[#d7dde6] md:text-lg">
+          Välj datum och se direkt vad som är ledigt och vad det kostar. Vi levererar och monterar i Karlshamn och övriga Blekinge.
+        </p>
+      {% endif %}
     </div>
 
-    <div class="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8 lg:w-[371px] lg:flex-none">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-bold text-slate-950">Välj datum</h2>
-          <p class="mt-1 text-sm text-slate-600">
-            {% if public_booking_lead_days > 0 %}
-              Välj hyresperiod minst {{ public_booking_lead_days }} {{ "dag" if public_booking_lead_days == 1 else "dagar" }} framåt för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% else %}
-              Välj hyresperiod för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% endif %}
-          </p>
-        </div>
-        <div class="rounded-full bg-pink-500 px-3 py-1 text-xs font-medium text-white shadow-sm whitespace-nowrap">Steg 1</div>
-      </div>
-
+    <div id="kv-dates" class="kv-panel kv-hero-dock w-full max-w-[47rem] p-4 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] md:p-5">
       <form
         id="availability-search-form"
         method="get"
         action="{{ url_for('routes.home') }}"
-        class="mt-5 grid gap-4"
+        class="grid gap-3 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end"
         data-date-range
         data-date-range-calendar="themed"
         data-date-range-locale="sv"
         data-date-range-min="{{ min_date }}"
       >
         <div>
-          <label class="text-sm font-medium text-slate-700" for="start_date">Från datum</label>
+          <label class="kv-field-label" for="start_date">Från</label>
           <input
             id="start_date"
             type="text"
@@ -105,15 +67,15 @@
             readonly
             inputmode="numeric"
             autocomplete="off"
-            placeholder="YYYY-MM-DD"
+            placeholder="Välj startdatum"
             pattern="\d{4}-\d{2}-\d{2}"
             data-date-range-start
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+            class="kv-input kv-num border-[#d9cfbe] bg-[#f2ece2] focus:border-[#f2b35b] focus:ring-4 focus:ring-[#f2b35b]/40"
           >
         </div>
 
         <div>
-          <label class="text-sm font-medium text-slate-700" for="end_date">Till datum</label>
+          <label class="kv-field-label" for="end_date">Till</label>
           <input
             id="end_date"
             type="text"
@@ -123,39 +85,136 @@
             readonly
             inputmode="numeric"
             autocomplete="off"
-            placeholder="YYYY-MM-DD"
+            placeholder="Välj slutdatum"
             pattern="\d{4}-\d{2}-\d{2}"
             data-date-range-end
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+            class="kv-input kv-num border-[#d9cfbe] bg-[#f2ece2] focus:border-[#f2b35b] focus:ring-4 focus:ring-[#f2b35b]/40"
           >
         </div>
 
-        <button
-          type="submit"
-          class="inline-flex items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100"
-        >
-          Sök tillgänglighet
-        </button>
+        <button type="submit" class="kv-btn kv-btn-lamp w-full sm:col-span-2 md:col-span-1 md:w-auto">Visa lediga tält</button>
 
         <p
           id="availability-search-error"
-          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          class="hidden rounded-[6px] border border-[rgba(243,155,143,0.5)] bg-[rgba(243,155,143,0.1)] px-4 py-3 text-sm text-[#f7d3cd] sm:col-span-2 md:col-span-3"
         ></p>
       </form>
 
+      <p class="mt-3 text-sm leading-relaxed text-[#9aa6b8]">
+        Tält hyrs 3–7 dagar{% if lead_days > 0 %} och bokas minst {{ lead_days }} {{ "dag" if lead_days == 1 else "dagar" }} i förväg{% endif %}. Längre än så? Ring <a class="kv-link kv-num" href="tel:0730813710">073-081 37 10</a>.
+      </p>
+
       {% if role == "customer" and customer_profile %}
-        <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-          Inloggad som <span class="font-medium">{{ customer_profile.full_name }}</span>.
-          Nya bokningar läggs på ditt befintliga konto.
-        </div>
+        <p class="mt-3 border-t border-[rgba(242,236,226,0.12)] pt-3 text-sm text-[#d7dde6]">
+          Inloggad som <span class="font-semibold text-[#f2ece2]">{{ customer_profile.full_name }}</span>. Nya bokningar hamnar på ditt konto.
+        </p>
       {% endif %}
     </div>
   </div>
 </section>
 
+{% if not has_selected_dates %}
+<section class="kv-wrap py-20 md:py-28" data-kv-landing aria-labelledby="kv-how-title">
+  <h2 id="kv-how-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Så går bokningen till</h2>
+  <ol class="kv-steps mt-12 grid gap-10 md:mt-16 md:grid-cols-4 md:gap-8">
+    {% set steps = [
+      ("Välj datum", "Du ser bara det som är ledigt just de dagarna, med pris för hela hyresperioden."),
+      ("Välj tält och tillbehör", "Lägg till bord, stolar och ljusslingor. Summan räknas ut medan du väljer."),
+      ("Leverans och montering", "Välj om vi ska köra ut och bygga upp. Leveransen prissätts efter körsträckan."),
+      ("Vi bekräftar", "Bokningen är väntande tills vi har gått igenom den. Sedan får du besked."),
+    ] %}
+    {% for title, text in steps %}
+      <li class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 md:block md:border-t md:border-[rgba(242,236,226,0.24)] md:pt-0">
+        <span class="kv-step-bulb mt-1 md:absolute md:-top-px md:left-0 md:mt-0" aria-hidden="true"></span>
+        {% if not loop.last %}<span class="absolute bottom-[-2.5rem] left-[6px] top-7 w-px bg-[rgba(242,236,226,0.2)] md:hidden" aria-hidden="true"></span>{% endif %}
+        <div class="md:pt-10">
+          <h3 class="flex items-baseline gap-3 text-lg font-semibold">
+            <span class="kv-display text-[1.6rem] leading-none text-[#f2b35b]">{{ loop.index }}</span>
+            <span>{{ title }}</span>
+          </h3>
+          <p class="mt-2 max-w-[32ch] text-[#b9c2cf]">{{ text }}</p>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
 <div id="availability-results">
   {% include "partials/_guest_booking_results.html" %}
 </div>
+
+{% if not has_selected_dates %}
+{% set setup_fees = (categories or [])|selectattr('is_tent')|map(attribute='setup_service_fee')|select|list %}
+<section class="kv-wrap py-16 md:py-24" data-kv-landing aria-labelledby="kv-delivery-title">
+  <div class="grid gap-10 md:grid-cols-12 md:items-center md:gap-12">
+    <div class="md:col-span-6">
+      <figure class="kv-photo aspect-[4/3] md:aspect-[5/6] lg:aspect-[4/3]">
+        <img
+          src="{{ url_for('static', filename='img/kvallsljus/dusk-marquee-lit.jpg') }}"
+          width="1400"
+          height="933"
+          alt="Ett långt vitt tält i skymningen, upplyst inifrån, med vimplar och ljusslingor på stolpar"
+          loading="lazy"
+          decoding="async"
+          class="object-[22%_60%]"
+        >
+      </figure>
+    </div>
+    <div class="md:col-span-6">
+      <h2 id="kv-delivery-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Vi kör ut och bygger upp</h2>
+      <p class="mt-5 max-w-[48ch] text-lg leading-relaxed text-[#cfd6e0]">
+        Lägg till leverans i bokningen så räknar vi ut priset efter körsträckan till din adress. Väljer du montering bygger vi upp och tar ner tältet, och hjälper till med möbleringen.
+      </p>
+      <dl class="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm text-[#9aa6b8]">Leverans</dt>
+          <dd class="mt-1 font-semibold">Efter körsträcka, visas innan du bokar</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-[#9aa6b8]">Montering</dt>
+          <dd class="mt-1 font-semibold">{% if setup_fees %}Från <span class="kv-num">{{ setup_fees|min|sek }}</span> per tält{% else %}Pris per tält{% endif %}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-[#9aa6b8]">Område</dt>
+          <dd class="mt-1 font-semibold">Karlshamn och övriga Blekinge</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-[#9aa6b8]">Hyrestid</dt>
+          <dd class="mt-1 font-semibold">Tält 3–7 dagar</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="border-t border-[rgba(242,236,226,0.12)]" data-kv-landing aria-labelledby="kv-questions-title">
+  <div class="kv-wrap grid gap-12 py-20 md:grid-cols-12 md:py-24">
+    <div class="md:col-span-7">
+      <h2 id="kv-questions-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Frågor innan du bokar?</h2>
+      <ul class="mt-8 max-w-[40rem]">
+        {% for number, question in [
+          (2, "Hur långt i förväg måste jag boka?"),
+          (3, "Kan jag få leverans och montering?"),
+          (5, "Vad händer efter att jag skickat in en bokning?"),
+        ] %}
+          <li class="border-b border-[rgba(242,236,226,0.12)]">
+            <a class="group flex min-h-[56px] items-center justify-between gap-6 py-3 text-lg transition-colors hover:text-[#f8c98a]" href="{{ url_for('routes.faq') }}#fraga-{{ number }}">
+              <span>{{ question }}</span>
+              <span class="kv-price-toggle-caret -rotate-45 text-[#f2b35b]" aria-hidden="true"></span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      <a class="kv-link mt-6 inline-block" href="{{ url_for('routes.faq') }}">Alla frågor och svar</a>
+    </div>
+    <div class="md:col-span-5 md:pl-8">
+      <p class="text-[#9aa6b8]">Hittar du inte svaret? Ring oss.</p>
+      <a class="kv-display kv-num mt-3 block text-[2.4rem] leading-none text-[#f2ece2] transition-colors hover:text-[#f8c98a] md:text-[3rem]" href="tel:0730813710">073-081 37 10</a>
+    </div>
+  </div>
+</section>
+{% endif %}
 
 <script>
   function initGuestBookingForm(root = document) {
