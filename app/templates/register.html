@@ -1,59 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="mx-auto max-w-5xl">
-  <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-    <div class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_50%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-      <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="absolute right-6 top-6 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-      <div class="relative px-6 py-8 md:px-8">
-        <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-          Kundkonto
-        </div>
-        <h1 class="mt-5 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Skapa konto</h1>
-        <p class="mt-3 max-w-xl text-sm leading-6 text-slate-700 md:text-base">
-          Registrera dig som kund och skapa profilen som dina bokningar använder automatiskt.
-        </p>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-2xl border border-emerald-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Snabb bokning</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Dina kontaktuppgifter kan återanvändas vid framtida bokningar.</div>
-          </div>
-          <div class="rounded-2xl border border-pink-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Tydlig översikt</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Se vad du har bokat och vad som fortfarande väntar på bekräftelse.</div>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="pr-page pr-auth">
+  <div class="pr-wrap pr-auth__grid">
+    <header class="pr-auth__intro">
+      <h1 class="pr-h1 pr-h1--page">Skapa konto</h1>
+      <p class="pr-lede">Med ett kundkonto samlas dina bokningar på ett ställe och dina uppgifter fylls i nästa gång du bokar.</p>
+    </header>
 
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8">
-      <form method="post" class="space-y-4">
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="full_name">Fullständigt namn</label>
-          <input id="full_name" name="full_name" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+    <div class="pr-auth__panel">
+      <form method="post" class="pr-auth__form">
+        <div class="pr-fieldset">
+          <label class="pr-label" for="full_name">För- och efternamn</label>
+          <input id="full_name" name="full_name" required autocomplete="name" class="pr-field">
         </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
-          <input id="email" name="email" type="email" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+        <div class="pr-fieldset">
+          <label class="pr-label" for="email">E-post</label>
+          <input id="email" name="email" type="email" required autocomplete="email" class="pr-field">
         </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="phone">Telefon (valfritt)</label>
-          <input id="phone" name="phone" class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+        <div class="pr-fieldset">
+          <label class="pr-label" for="phone">Telefon <span class="pr-optional">valfritt</span></label>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" class="pr-field">
         </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="password">Lösenord</label>
-          <input id="password" name="password" type="password" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+        <div class="pr-fieldset">
+          <label class="pr-label" for="password">Lösenord</label>
+          <input id="password" name="password" type="password" required autocomplete="new-password" class="pr-field">
         </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="password_confirm">Upprepa l&ouml;senord</label>
-          <input id="password_confirm" name="password_confirm" type="password" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+        <div class="pr-fieldset">
+          <label class="pr-label" for="password_confirm">Upprepa lösenordet</label>
+          <input id="password_confirm" name="password_confirm" type="password" required autocomplete="new-password" class="pr-field">
         </div>
 
-        <button class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600">
-          Skapa konto
-        </button>
+        <button class="pr-btn pr-btn--primary pr-btn--block">Skapa konto</button>
       </form>
+      <p class="pr-auth__alt">Har du redan ett konto? <a class="pr-link" href="{{ url_for('auth.login_form') }}">Logga in</a></p>
     </div>
+    <dl class="pr-facts pr-auth__facts">
+      <div class="pr-facts__row">
+        <dt>Snabbare bokning</dt>
+        <dd>Kontaktuppgifterna återanvänds vid framtida bokningar.</dd>
+      </div>
+      <div class="pr-facts__row">
+        <dt>Översikt</dt>
+        <dd>Se vad du har bokat och vad som väntar på bekräftelse.</dd>
+      </div>
+      <div class="pr-facts__row">
+        <dt>Mitt i en bokning?</dt>
+        <dd>Kontot kan också skapas i sista steget när du bokar.</dd>
+      </div>
+    </dl>
   </div>
-</section>
+</div>
 {% endblock %}
