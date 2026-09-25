@@ -705,6 +705,13 @@ select.sk-input {
   }
 }
 
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .sk-hero__photo img {
+    aspect-ratio: 2 / 1;
+    object-position: 50% 70%;
+  }
+}
+
 .sk-hero__photo .sk-valance {
   position: absolute;
   top: 0;
@@ -893,6 +900,7 @@ select.sk-input {
   grid-template-columns: 3.5rem minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+  align-content: start;
 }
 
 @media (min-width: 768px) {
@@ -1220,6 +1228,12 @@ select.sk-input {
 
 .sk-band__photo img {
   aspect-ratio: 4 / 3;
+}
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .sk-band__photo img {
+    aspect-ratio: 16 / 9;
+  }
 }
 
 .sk-band__grid {
