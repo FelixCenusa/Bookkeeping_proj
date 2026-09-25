@@ -11,6 +11,11 @@
   {%- endif -%}
 {%- endmacro %}
 
+{# The tent's own name without the "Tält" prefix, so the landing list says what the receipt says. #}
+{% macro tent_size(c) -%}
+  {{- (c.display_name|replace('Tält ', '', 1))|e|replace('×', '<span class="kv-times">×</span>'|safe) -}}
+{%- endmacro %}
+
 {% macro shared_stock(c) -%}
 <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
   <button
@@ -1142,7 +1147,7 @@
                   <li>
                     <div class="kv-menu-row">
                       <h3 class="kv-leader">
-                        <span class="kv-display kv-num whitespace-nowrap text-[2rem] leading-none md:text-[2.4rem]">{% if dims %}{{ dims.width }}<span class="kv-times">×</span>{{ dims.length }} m{% else %}{{ c.display_name }}{% endif %}</span>
+                        <span class="kv-display kv-num whitespace-nowrap text-[2rem] leading-none md:text-[2.4rem]">{% if dims %}{{ tent_size(c) }}{% else %}{{ c.display_name }}{% endif %}</span>
                       </h3>
                       <div>{{ from_price(c) }}</div>
                     </div>
