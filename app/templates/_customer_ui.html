@@ -1,0 +1,208 @@
+{#
+  Planritning: shared customer UI macros.
+
+  footprint()   One tent seen from above, drawn to a shared scale so that every
+                drawing in the same list can be compared by eye. The scale comes
+                from the largest tent in the list (max_len x max_wid metres).
+                Dimension lines, a 1 m grid and the floor area are drawn in.
+  plan_sheet()  All tents stacked from one corner at one scale, with a guest
+                slider that highlights the smallest tent that fits.
+  num()         Metres and square metres without trailing ",0".
+#}
+
+{% macro num(value) -%}
+{%- set f = value|float -%}
+{%- if f == (f|round(0, 'floor')) -%}{{ f|int }}{%- else -%}{{ (f|round(1))|string|replace('.', ',') }}{%- endif -%}
+{%- endmacro %}
+
+{% macro area_of(category, dims) -%}
+{%- if category.floor_area_m2 -%}{{ num(category.floor_area_m2) }}{%- elif dims -%}{{ num(dims.width|float * dims.length|float) }}{%- endif -%}
+{%- endmacro %}
+
+{#
+  size='card'  catalog tile / booking detail: dimension lines + area label
+  size='thumb' booking rows and cards: outline + grid only, text sits beside it
+  draw=true    stroke draws itself in when scrolled into view (planritning.js)
+#}
+{% macro footprint(dims, area=None, max_len=10, max_wid=6, size='card', draw=true, title=None) -%}
+{%- set L = dims.length|float -%}
+{%- set W = dims.width|float -%}
+{%- set max_len = [max_len|float, L]|max -%}
+{%- set max_wid = [max_wid|float, W]|max -%}
+{%- if size == 'thumb' -%}
+  {%- set vb_w = 96 -%}{%- set vb_h = 60 -%}
+  {%- set x0 = 2 -%}{%- set top = 2 -%}{%- set avail_w = 92 -%}{%- set avail_h = 56 -%}
+{%- else -%}
+  {%- set vb_w = 240 -%}{%- set vb_h = 164 -%}
+  {%- set x0 = 36 -%}{%- set top = 8 -%}{%- set avail_w = 196 -%}{%- set avail_h = 122 -%}
+{%- endif -%}
+{%- set s = [avail_w / max_len, avail_h / max_wid]|min -%}
+{%- set w = L * s -%}
+{%- set h = W * s -%}
+{%- set yb = top + avail_h -%}
+{%- set y0 = yb - h -%}
+{%- set area_text = area if area else num(W * L) -%}
+<svg class="fp fp--{{ size }}" viewBox="0 0 {{ vb_w }} {{ vb_h }}" role="img" aria-label="{{ title or ('Ritning ovanifrån: ' ~ num(W) ~ ' gånger ' ~ num(L) ~ ' meter, ' ~ area_text ~ ' kvadratmeter') }}"{% if draw %} data-fp-draw{% endif %} focusable="false">
+  <path class="fp-fill" d="M{{ x0|round(2) }} {{ y0|round(2) }}h{{ w|round(2) }}v{{ h|round(2) }}h-{{ w|round(2) }}z"/>
+  <g class="fp-grid">
+    {%- for i in range(1, (L|round(0, 'ceil'))|int) %}<path d="M{{ (x0 + i * s)|round(2) }} {{ y0|round(2) }}V{{ yb|round(2) }}"/>{% endfor %}
+    {%- for j in range(1, (W|round(0, 'ceil'))|int) %}<path d="M{{ x0|round(2) }} {{ (yb - j * s)|round(2) }}H{{ (x0 + w)|round(2) }}"/>{% endfor %}
+  </g>
+  <path class="fp-line" pathLength="1" d="M{{ x0|round(2) }} {{ yb|round(2) }}V{{ y0|round(2) }}H{{ (x0 + w)|round(2) }}V{{ yb|round(2) }}Z"/>
+  {%- if size != 'thumb' %}
+  <g class="fp-dims">
+    {%- set yd = yb + 12 %}
+    <path class="fp-ext" d="M{{ x0|round(2) }} {{ yb + 3 }}V{{ yb + 16 }}M{{ (x0 + w)|round(2) }} {{ yb + 3 }}V{{ yb + 16 }}"/>
+    <path class="fp-dim" d="M{{ x0|round(2) }} {{ yd }}H{{ (x0 + w)|round(2) }}M{{ (x0 - 2.5)|round(2) }} {{ yd + 2.5 }}l5 -5M{{ (x0 + w - 2.5)|round(2) }} {{ yd + 2.5 }}l5 -5"/>
+    <text class="fp-label" x="{{ (x0 + w / 2)|round(2) }}" y="{{ yb + 27 }}" text-anchor="middle">{{ num(L) }} m</text>
+    {%- set xd = x0 - 12 %}
+    <path class="fp-ext" d="M{{ x0 - 3 }} {{ yb|round(2) }}H{{ x0 - 16 }}M{{ x0 - 3 }} {{ y0|round(2) }}H{{ x0 - 16 }}"/>
+    <path class="fp-dim" d="M{{ xd }} {{ yb|round(2) }}V{{ y0|round(2) }}M{{ xd - 2.5 }} {{ (yb + 2.5)|round(2) }}l5 -5M{{ xd - 2.5 }} {{ (y0 + 2.5)|round(2) }}l5 -5"/>
+    <text class="fp-label" transform="translate({{ x0 - 19 }} {{ ((y0 + yb) / 2)|round(2) }}) rotate(-90)" text-anchor="middle">{{ num(W) }} m</text>
+    <text class="fp-area" x="{{ (x0 + w / 2)|round(2) }}" y="{{ (y0 + h / 2)|round(2) }}" text-anchor="middle" dominant-baseline="central">{{ area_text }} m²</text>
+  </g>
+  {%- endif %}
+</svg>
+{%- endmacro %}
+
+{#
+  tents: list of tent categories in catalog order (small to large).
+  Renders the whole size guide: nested outlines, a highlight layer and the slider.
+#}
+{% macro plan_sheet(tents, default_guests=30, link_prefix=None) -%}
+{%- set rows = [] -%}
+{%- for t in tents -%}
+  {%- set d = t|tent_dimensions -%}
+  {%- if d -%}{%- set _ = rows.append({'t': t, 'd': d}) -%}{%- endif -%}
+{%- endfor -%}
+{%- if rows -%}
+{%- set max_len = rows|map(attribute='d')|map(attribute='length')|max -%}
+{%- set max_wid = rows|map(attribute='d')|map(attribute='width')|max -%}
+{%- set caps = rows|map(attribute='t')|map(attribute='capacity')|select|list -%}
+{%- set max_cap = caps|max if caps else 0 -%}
+{%- set ns = namespace(sel=None) -%}
+{%- for r in rows -%}
+  {%- if ns.sel is none and (r.t.capacity or 0) >= default_guests -%}{%- set ns.sel = r.t.id -%}{%- endif -%}
+{%- endfor -%}
+{%- if ns.sel is none -%}{%- set ns.sel = (rows|last).t.id -%}{%- endif -%}
+{%- set vb_w = 520 -%}{%- set vb_h = 330 -%}
+{%- set x0 = 46 -%}{%- set top = 14 -%}{%- set avail_w = 458 -%}{%- set avail_h = 262 -%}
+{%- set s = [avail_w / (max_len|float), avail_h / (max_wid|float)]|min -%}
+{%- set yb = top + avail_h -%}
+<figure class="ps" data-plan-sheet>
+  <div class="ps__drawing">
+    <svg class="ps__svg" viewBox="0 0 {{ vb_w }} {{ vb_h }}" role="img" aria-labelledby="ps-caption" focusable="false">
+      <g class="ps-base">
+        {%- for r in rows %}
+        {%- set w = r.d.length|float * s %}{%- set h = r.d.width|float * s %}
+        <path class="ps-outline" style="--i: {{ loop.index0 }}" pathLength="1" d="M{{ x0 }} {{ yb }}V{{ (yb - h)|round(2) }}H{{ (x0 + w)|round(2) }}V{{ yb }}Z"/>
+        {%- endfor %}
+      </g>
+      {%- for r in rows %}
+      {%- set L = r.d.length|float %}{%- set W = r.d.width|float %}
+      {%- set w = L * s %}{%- set h = W * s %}{%- set y0 = yb - h %}
+      <g class="ps-tent{% if r.t.id == ns.sel %} is-on{% endif %}" data-ps-tent="{{ r.t.id }}" data-capacity="{{ r.t.capacity or 0 }}">
+        <path class="ps-fill" d="M{{ x0 }} {{ y0|round(2) }}h{{ w|round(2) }}v{{ h|round(2) }}h-{{ w|round(2) }}z"/>
+        <g class="ps-grid">
+          {%- for i in range(1, (L|round(0, 'ceil'))|int) %}<path d="M{{ (x0 + i * s)|round(2) }} {{ y0|round(2) }}V{{ yb }}"/>{% endfor %}
+          {%- for j in range(1, (W|round(0, 'ceil'))|int) %}<path d="M{{ x0 }} {{ (yb - j * s)|round(2) }}H{{ (x0 + w)|round(2) }}"/>{% endfor %}
+        </g>
+        <path class="ps-line" d="M{{ x0 }} {{ yb }}V{{ y0|round(2) }}H{{ (x0 + w)|round(2) }}V{{ yb }}Z"/>
+        {%- set yd = yb + 16 %}
+        <path class="ps-ext" d="M{{ x0 }} {{ yb + 4 }}V{{ yb + 21 }}M{{ (x0 + w)|round(2) }} {{ yb + 4 }}V{{ yb + 21 }}"/>
+        <path class="ps-dim" d="M{{ x0 }} {{ yd }}H{{ (x0 + w)|round(2) }}M{{ x0 - 3 }} {{ yd + 3 }}l6 -6M{{ (x0 + w - 3)|round(2) }} {{ yd + 3 }}l6 -6"/>
+        <text class="ps-label" x="{{ (x0 + w / 2)|round(2) }}" y="{{ yb + 36 }}" text-anchor="middle">{{ num(L) }} m</text>
+        {%- set xd = x0 - 16 %}
+        <path class="ps-ext" d="M{{ x0 - 4 }} {{ yb }}H{{ x0 - 21 }}M{{ x0 - 4 }} {{ y0|round(2) }}H{{ x0 - 21 }}"/>
+        <path class="ps-dim" d="M{{ xd }} {{ yb }}V{{ y0|round(2) }}M{{ xd - 3 }} {{ yb + 3 }}l6 -6M{{ xd - 3 }} {{ (y0 + 3)|round(2) }}l6 -6"/>
+        <text class="ps-label" transform="translate({{ x0 - 25 }} {{ ((y0 + yb) / 2)|round(2) }}) rotate(-90)" text-anchor="middle">{{ num(W) }} m</text>
+        <text class="ps-area" x="{{ (x0 + w / 2)|round(2) }}" y="{{ (y0 + h / 2)|round(2) }}" text-anchor="middle" dominant-baseline="central">{{ area_of(r.t, r.d) }} m²</text>
+      </g>
+      {%- endfor %}
+    </svg>
+  </div>
+  <figcaption class="ps__control">
+    <div class="ps__row">
+      <label class="ps__label" for="ps-guests">Hur många gäster?</label>
+      <output class="ps__count pr-num" for="ps-guests" data-ps-count>{{ default_guests }}</output>
+    </div>
+    <input class="ps__range" id="ps-guests" type="range" min="1" max="{{ max_cap }}" step="1" value="{{ default_guests }}" data-ps-range aria-describedby="ps-caption">
+    <p class="ps__result" id="ps-caption" aria-live="polite">
+      {%- for r in rows %}
+      <span class="ps-result{% if r.t.id == ns.sel %} is-on{% endif %}" data-ps-result="{{ r.t.id }}">
+        <span class="ps-result__name">{{ r.t.display_name }}</span>
+        <span class="ps-result__meta">rymmer upp till <span class="pr-num">{{ r.t.capacity }}</span> gäster på <span class="pr-num">{{ area_of(r.t, r.d) }}&nbsp;m²</span>.{% if link_prefix %} <a class="pr-link" href="#{{ link_prefix }}{{ r.t.id }}">Se priser</a>{% endif %}</span>
+      </span>
+      {%- endfor %}
+    </p>
+  </figcaption>
+</figure>
+{%- endif -%}
+{%- endmacro %}
+
+{#
+  Price block for the no-dates catalogue: cheapest period, then every period in
+  a fixed-position popover (hooks from the original partial kept as they were).
+#}
+{% macro days_text(min_days, max_days) -%}
+{%- if min_days == max_days -%}{{ min_days }} {{ 'dag' if min_days == 1 else 'dagar' }}{%- else -%}{{ min_days }}–{{ max_days }} dagar{%- endif -%}
+{%- endmacro %}
+
+{% macro price_block(c) -%}
+<div class="pr-price">
+  {% if c.all_period_prices %}
+    {% set cheapest_price_row = (c.all_period_prices|sort(attribute='price')|first) %}
+    <p class="pr-price__from">
+      <span class="pr-price__k">Från</span>
+      <span class="pr-num pr-price__v">{{ cheapest_price_row.price|sek }}</span>
+      <span class="pr-price__per">för {{ days_text(cheapest_price_row.min_days, cheapest_price_row.max_days) }}</span>
+    </p>
+    <div class="pr-pop" data-price-popover-root>
+      {% set price_option_count = c.all_period_prices|length + (1 if c.setup_service_fee else 0) %}
+      <button
+        type="button"
+        data-price-popover-toggle
+        aria-expanded="false"
+        class="pr-pop__toggle"
+      >
+        <span>Alla priser</span>
+        <span class="pr-pop__count pr-num">{{ price_option_count }}</span>
+      </button>
+
+      <div class="fixed z-[80] hidden pr-pop__panel" data-price-popover-panel>
+        <div class="pr-pop__head">
+          <p class="pr-pop__title">{{ c.display_name }}</p>
+          <button
+            type="button"
+            data-price-popover-close
+            class="pr-pop__close"
+            aria-label="Stäng prislista"
+          >×</button>
+        </div>
+
+        <div class="pr-pop__rows">
+        {% for price_row in c.all_period_prices %}
+          <div class="pr-pop__row">
+            <span>{{ days_text(price_row.min_days, price_row.max_days) }}</span>
+            <span class="pr-num">{{ price_row.price|sek }}</span>
+          </div>
+        {% endfor %}
+        {% if c.setup_service_fee %}
+          <div class="pr-pop__row pr-pop__row--extra">
+            <span>Montering<span class="pr-pop__fine">vid leverans</span></span>
+            <span class="pr-num">{{ c.setup_service_fee|sek }}</span>
+          </div>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+  {% elif c.has_standard_price %}
+    <p class="pr-price__from">
+      <span class="pr-num pr-price__v">{{ c.quoted_period_price|sek }}</span>
+      <span class="pr-price__per">för {{ days_text(c.rental_period_min_days, c.rental_period_max_days) }}</span>
+    </p>
+  {% else %}
+    <p class="pr-price__from"><span class="pr-warn">Pris på förfrågan.</span> Ring <a class="pr-link" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>.</p>
+  {% endif %}
+</div>
+{%- endmacro %}

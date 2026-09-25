@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "_components.html" as ui with context %}
+{% import "_customer_ui.html" as pr with context %}
 
 {% block extra_head %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -12,146 +13,128 @@
 {% endblock %}
 
 {% block content %}
-<section class="mx-auto max-w-6xl">
-  <div class="flex flex-col gap-4 lg:flex-row">
-    <div class="relative min-w-0 flex-1 overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_50%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-      <div class="absolute -left-12 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="absolute right-8 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-      <div class="absolute bottom-0 right-0 h-40 w-40 translate-x-1/4 translate-y-1/4 rounded-full bg-pink-100/55"></div>
-
-      <div class="relative px-4 py-8 md:px-5">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-            KADA PartyTillbehör
-          </div>
-
-          <h1 class="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
-            Sök bland våra artiklar och boka direkt.
-          </h1>
-
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 md:text-base">
-            Här visas alla artiklar med standardpris och tillgänglighet. Tält kan hyras ut från 3 till 7 dagar, om ni behöver hyra längre kontakta oss på:
-            <a
-              href="mailto:kadaparty@kadaparty.se"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              kadaparty@kadaparty.se
-            </a>
-            eller via telefon:
-            <a
-              href="tel:0730813710"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              0730813710
-            </a>
-          </p>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700">
-            KADA PartyTillbeh&#246;r erbjuder t&#228;ltuthyrning, partyt&#228;lt och festutrustning f&#246;r party och fest i Karlshamn och &#246;vriga Blekinge.
-          </p>
-        </div>
-
-        <div class="mt-5 grid gap-3 sm:grid-cols-[28%_29%_40%]">
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Tillgänglighet</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Boka nu och få det levererat och monterat till festen</div>
-          </div>
-
-          <div class="rounded-2xl border border-pink-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Priser</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">De bästa priserna i Blekinge</div>
-          </div>
-
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Leverans</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Vi erbjuder också leverans ända fram! Bara lägg till leverans i kundvagnen så räknar vi priset åt dig!</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8 lg:w-[371px] lg:flex-none">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-bold text-slate-950">Välj datum</h2>
-          <p class="mt-1 text-sm text-slate-600">
-            {% if public_booking_lead_days > 0 %}
-              Välj hyresperiod minst {{ public_booking_lead_days }} {{ "dag" if public_booking_lead_days == 1 else "dagar" }} framåt för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% else %}
-              Välj hyresperiod för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% endif %}
-          </p>
-        </div>
-        <div class="rounded-full bg-pink-500 px-3 py-1 text-xs font-medium text-white shadow-sm whitespace-nowrap">Steg 1</div>
-      </div>
+{%- set hero_tents = (categories or [])|selectattr('is_tent')|list -%}
+{%- set ns_days = namespace(lo=None, hi=None) -%}
+{%- for t in hero_tents -%}
+  {%- for p in (t.all_period_prices or []) -%}
+    {%- if ns_days.lo is none or p.min_days < ns_days.lo -%}{%- set ns_days.lo = p.min_days -%}{%- endif -%}
+    {%- if ns_days.hi is none or p.max_days > ns_days.hi -%}{%- set ns_days.hi = p.max_days -%}{%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+<section class="pr-hero{% if has_selected_dates %} pr-hero--compact{% endif %}" aria-labelledby="hero-title">
+  <div class="pr-wrap pr-hero__grid">
+    <div class="pr-hero__copy">
+      {% if has_selected_dates %}
+        <h1 class="pr-h1 pr-h1--compact" id="hero-title">Boka tält till festen</h1>
+      {% else %}
+        <h1 class="pr-h1" id="hero-title">Hyr partytält i Karlshamn och Blekinge</h1>
+        <p class="pr-lede">Välj datum så ser du direkt vilka tält och tillbehör som är lediga, med pris för hela perioden.</p>
+      {% endif %}
 
       <form
         id="availability-search-form"
         method="get"
         action="{{ url_for('routes.home') }}"
-        class="mt-5 grid gap-4"
+        class="pr-search"
         data-date-range
         data-date-range-calendar="themed"
         data-date-range-locale="sv"
         data-date-range-min="{{ min_date }}"
       >
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="start_date">Från datum</label>
-          <input
-            id="start_date"
-            type="text"
-            name="start_date"
-            value="{{ start_date }}"
-            required
-            readonly
-            inputmode="numeric"
-            autocomplete="off"
-            placeholder="YYYY-MM-DD"
-            pattern="\d{4}-\d{2}-\d{2}"
-            data-date-range-start
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-          >
+        <div class="pr-search__row">
+          <div class="pr-search__field">
+            <label class="pr-search__label" for="start_date">Från</label>
+            <input
+              id="start_date"
+              type="text"
+              name="start_date"
+              value="{{ start_date }}"
+              required
+              readonly
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Välj datum"
+              pattern="\d{4}-\d{2}-\d{2}"
+              data-date-range-start
+              class="pr-search__input"
+            >
+          </div>
+
+          <div class="pr-search__field">
+            <label class="pr-search__label" for="end_date">Till</label>
+            <input
+              id="end_date"
+              type="text"
+              name="end_date"
+              value="{{ end_date }}"
+              required
+              readonly
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Välj datum"
+              pattern="\d{4}-\d{2}-\d{2}"
+              data-date-range-end
+              class="pr-search__input"
+            >
+          </div>
+
+          <button type="submit" class="pr-btn pr-btn--primary pr-search__submit">Visa lediga tält</button>
         </div>
 
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="end_date">Till datum</label>
-          <input
-            id="end_date"
-            type="text"
-            name="end_date"
-            value="{{ end_date }}"
-            required
-            readonly
-            inputmode="numeric"
-            autocomplete="off"
-            placeholder="YYYY-MM-DD"
-            pattern="\d{4}-\d{2}-\d{2}"
-            data-date-range-end
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-          >
-        </div>
+        <p id="availability-search-error" class="hidden pr-alert pr-alert--stop"></p>
 
-        <button
-          type="submit"
-          class="inline-flex items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100"
-        >
-          Sök tillgänglighet
-        </button>
+        <p class="pr-search__hint">
+          {% if ns_days.lo is not none %}Tält hyrs <span class="pr-num">{{ ns_days.lo }}–{{ ns_days.hi }}</span> dagar.{% endif %}
+          {% if public_booking_lead_days > 0 %}Första möjliga startdag är <span class="pr-num">{{ min_date|swedish_date_range(min_date) }}</span>.{% endif %}
+          Längre hyra? Ring <a class="pr-link" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>.
+        </p>
 
-        <p
-          id="availability-search-error"
-          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-        ></p>
+        {% if role == "customer" and customer_profile %}
+          <p class="pr-search__who">Inloggad som <strong>{{ customer_profile.full_name }}</strong>. Nya bokningar hamnar på ditt konto.</p>
+        {% endif %}
       </form>
-
-      {% if role == "customer" and customer_profile %}
-        <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-          Inloggad som <span class="font-medium">{{ customer_profile.full_name }}</span>.
-          Nya bokningar läggs på ditt befintliga konto.
-        </div>
-      {% endif %}
     </div>
+
+    {% if not has_selected_dates and hero_tents %}
+      <div class="pr-hero__plan">
+        {{ pr.plan_sheet(hero_tents, default_guests=30, link_prefix='talt-') }}
+      </div>
+    {% endif %}
   </div>
 </section>
+
+{% if not has_selected_dates and hero_tents %}
+  {%- set caps = hero_tents|map(attribute='capacity')|select|list -%}
+  {%- set first_dims = (hero_tents|first)|tent_dimensions -%}
+  {%- set last_dims = (hero_tents|last)|tent_dimensions -%}
+  <section class="pr-stats" aria-label="Sortimentet i siffror">
+    <dl class="pr-wrap pr-stats__row">
+      <div class="pr-stats__cell">
+        <dt>Tältstorlekar</dt>
+        <dd><span class="pr-stats__num pr-num">{{ hero_tents|length }}</span>{% if first_dims and last_dims %}<span class="pr-stats__note">från <span class="pr-num">{{ pr.num(first_dims.width) }}×{{ pr.num(first_dims.length) }}</span> till <span class="pr-num">{{ pr.num(last_dims.width) }}×{{ pr.num(last_dims.length) }}</span> meter</span>{% endif %}</dd>
+      </div>
+      {% if caps %}
+      <div class="pr-stats__cell">
+        <dt>Gäster per tält</dt>
+        <dd><span class="pr-stats__num pr-num">{{ caps|min }}–{{ caps|max }}</span><span class="pr-stats__note">beroende på storlek</span></dd>
+      </div>
+      {% endif %}
+      {% if ns_days.lo is not none %}
+      <div class="pr-stats__cell">
+        <dt>Hyrtid för tält</dt>
+        <dd><span class="pr-stats__num pr-num">{{ ns_days.lo }}–{{ ns_days.hi }}</span><span class="pr-stats__note">dagar, pris för hela perioden</span></dd>
+      </div>
+      {% endif %}
+      {%- set hero_extras = (categories or [])|rejectattr('is_tent')|list %}
+      {% if hero_extras %}
+      <div class="pr-stats__cell">
+        <dt>Tillbehör</dt>
+        <dd><span class="pr-stats__num pr-num">{{ hero_extras|length }}</span><span class="pr-stats__note">sorters bord, stolar och ljus</span></dd>
+      </div>
+      {% endif %}
+    </dl>
+  </section>
+{% endif %}
 
 <div id="availability-results">
   {% include "partials/_guest_booking_results.html" %}

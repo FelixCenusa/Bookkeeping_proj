@@ -1,11 +1,35 @@
 {% import "_components.html" as ui with context %}
+{% import "_customer_ui.html" as pr with context %}
 
 {% if categories is not none %}
+  {%- set pr_tents = categories|selectattr('is_tent')|list -%}
+  {%- set pr_dims = [] -%}
+  {%- for t in pr_tents -%}{%- set d = t|tent_dimensions -%}{%- if d -%}{%- set _ = pr_dims.append(d) -%}{%- endif -%}{%- endfor -%}
+  {%- set pr_max_len = (pr_dims|map(attribute='length')|max) if pr_dims else 10 -%}
+  {%- set pr_max_wid = (pr_dims|map(attribute='width')|max) if pr_dims else 6 -%}
   {% if has_selected_dates %}
+  <div class="pr-flow" data-pr-flow>
+    <div class="pr-progress" data-pr-progress>
+      <div class="pr-wrap pr-progress__bar">
+        <p class="pr-progress__dates">
+          <span class="pr-progress__k">Era datum</span>
+          <strong class="pr-num">{{ start_date|swedish_date_range(end_date)|replace('-', '–') }}</strong>
+          <button type="button" class="pr-progress__edit" data-pr-edit-dates>Ändra</button>
+        </p>
+        <ol class="pr-progress__steps" aria-label="Bokningens steg">
+          <li class="is-done" data-pr-step="1"><a href="#availability-search-form"><span class="pr-num">1</span><span class="pr-progress__name">Datum</span></a></li>
+          <li class="is-current" data-pr-step="2"><a href="#steg-2" aria-current="step"><span class="pr-num">2</span><span class="pr-progress__name">Tält och tillbehör</span></a></li>
+          <li data-pr-step="3"><a href="#steg-3"><span class="pr-num">3</span><span class="pr-progress__name">Leverans</span></a></li>
+          <li data-pr-step="4"><a href="#steg-4"><span class="pr-num">4</span><span class="pr-progress__name">Konto</span></a></li>
+          <li data-pr-step="5"><a href="#steg-5"><span class="pr-num">5</span><span class="pr-progress__name">Skicka</span></a></li>
+        </ol>
+      </div>
+    </div>
+
   <form
     method="post"
     action="{{ url_for('routes.guest_booking_create') }}"
-    class="mt-6 space-y-6"
+    class="pr-wrap pr-booking"
     id="guest-booking-form"
     novalidate
     data-delivery-quote-url="{{ url_for('routes.guest_delivery_quote') }}"
@@ -13,58 +37,48 @@
     <input type="hidden" name="start_date" value="{{ start_date }}">
     <input type="hidden" name="end_date" value="{{ end_date }}">
 
-    <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]" data-client-list>
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 2</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Välj artiklar</h2>
-          </div>
+    <div class="pr-booking__grid">
+    <div class="pr-booking__main">
+    <section class="pr-step" id="steg-2" data-pr-step-section="2" data-client-list aria-labelledby="steg-2-title">
+      <header class="pr-step__head">
+        <span class="pr-step__no pr-num" aria-hidden="true">2</span>
+        <div>
+          <h2 class="pr-h2" id="steg-2-title">Välj tält och tillbehör</h2>
+          <p class="pr-step__lede">Priserna gäller hela perioden {{ start_date|swedish_date_range(end_date)|replace('-', '–') }}. Tälten är ritade i samma skala.</p>
+        </div>
+      </header>
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier hittades
+      {% if categories|length > 0 %}
+        <div class="pr-filter">
+          <label class="pr-label" for="item-search-input">Sök bland {{ categories|length }} artiklar</label>
+          <div class="pr-filter__row">
+            <input
+              id="item-search-input"
+              type="search"
+              data-client-list-search
+              placeholder="Till exempel stolar eller 6×10"
+              class="pr-field"
+            >
+            <span
+              class="pr-count pr-num"
+              id="item-search-count"
+              data-client-list-count
+              data-client-list-count-suffix="visas"
+            >{{ categories|length }} visas</span>
           </div>
         </div>
+      {% endif %}
 
-        {% if categories|length > 0 %}
-          <div class="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div class="max-w-xl">
-              <label class="text-sm font-medium text-slate-700" for="item-search-input">Sök artiklar</label>
-              <p class="mt-1 text-xs text-slate-500">Filtrera på namn, typ, hyresperiod eller detaljer.</p>
-            </div>
-
-            <div class="flex w-full flex-col gap-3 sm:flex-row lg:max-w-2xl lg:items-center">
-              <input
-                id="item-search-input"
-                type="search"
-                data-client-list-search
-                placeholder="Sök tält, inredning, priser..."
-                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-              <div
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-pink-200 bg-pink-50 px-3 py-2 text-xs font-medium text-rose-500 shadow-sm"
-                id="item-search-count"
-                data-client-list-count
-                data-client-list-count-suffix="visas"
-              >
-                {{ categories|length }} visas
-              </div>
-            </div>
-          </div>
-        {% endif %}
-      </div>
-
-      <div class="px-6 py-6 md:px-8">
+      <div class="pr-step__body">
         {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier är tillgängliga för de datumen.</i>
-          </div>
+          <p class="pr-empty">Inget går att boka för de datumen. Prova andra datum eller ring oss på <a class="pr-link" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>.</p>
         {% else %}
-          <div class="grid gap-4 md:hidden">
+          <div class="pr-cards md:hidden">
             {% for c in categories %}
               {% set disabled = c.available_items == 0 or not c.has_standard_price %}
-              <div
-                class="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(180deg,#fffdfd_0%,#ffffff_100%)] p-4 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]"
+              {% set d = c|tent_dimensions if c.is_tent else None %}
+              <article
+                class="pr-card{% if disabled %} is-disabled{% endif %}"
                 data-item-card
                 data-client-list-item
                 data-client-list-group="cards"
@@ -77,188 +91,175 @@
                   (c.notes or '')
                 )|lower }}"
               >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <div class="font-semibold text-slate-900">{{ c.display_name }}</div>
-                    <div class="mt-1 flex flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
+                <div class="pr-card__top">
+                  {% if d %}
+                    <div class="pr-card__fp">{{ pr.footprint(d, area=pr.area_of(c, d), max_len=pr_max_len, max_wid=pr_max_wid, size='thumb', draw=false) }}</div>
+                  {% endif %}
+                  <div class="pr-card__id">
+                    <h3 class="pr-card__name">{{ c.display_name }}</h3>
+                    {% if c.is_tent %}
+                      <p class="pr-card__meta">{% if c.capacity %}Upp till <span class="pr-num">{{ c.capacity }}</span> gäster{% endif %}{% if d %}<span class="pr-card__sep">,</span> <span class="pr-num">{{ pr.area_of(c, d) }}&nbsp;m²</span>{% endif %}</p>
+                    {% elif c.notes %}
+                      <p class="pr-card__meta">{{ c.notes }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="pr-card__buy">
+                  <div class="pr-card__price">
+                    {% if c.has_standard_price %}
+                      <span class="pr-num pr-card__amount">{{ c.quoted_period_price|sek }}</span>
+                      <span class="pr-card__period">{{ (c.rental_period_label or '')|replace('-', '–') }}{% if c.is_tent and c.setup_service_fee %}, montering {{ c.setup_service_fee|sek }}{% endif %}</span>
+                    {% else %}
+                      <span class="pr-warn">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
+                    {% endif %}
                   </div>
 
-                  <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                    <span class="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700" data-availability-strict-for="{{ c.id }}">
-                      {{ c.available_items }} lediga
-                    </span>
+                  <div class="pr-avail">
+                    <span class="pr-avail__n pr-num{% if c.available_items == 0 %} is-none{% endif %}" data-availability-strict-for="{{ c.id }}">{{ c.available_items }} lediga</span>
                     <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
                       <button
                         type="button"
-                        class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                        class="pr-info"
                         data-shared-stock-toggle
                         aria-expanded="false"
                         aria-label="Information om delat lager"
-                      >
-                        i
-                      </button>
-                      <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                        <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
+                      >i</button>
+                      <div class="fixed z-[60] hidden pr-pop__panel pr-pop__panel--note" data-shared-stock-popover>
+                        <p class="pr-pop__title">Delat lager</p>
+                        <p class="pr-pop__text" data-shared-stock-message-for="{{ c.id }}"></p>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="mt-4 grid gap-3 text-sm text-slate-600">
-                  <div>
-                    {% if c.has_standard_price %}
-                      <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                      <div class="text-xs text-slate-500">{{ c.rental_period_label }}</div>
-                    {% else %}
-                      <div class="font-medium text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</div>
-                    {% endif %}
-                  </div>
-
-                  <div class="space-y-1">
-                    {% if c.is_tent %}
-                      <div>Kapacitet: {{ c.capacity }}</div>
-                      <div>Säsong: {{ c.season_rating }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                    {% else %}
-                      <div>{{ c.furnishing_kind }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                      {% if c.weight_kg %}<div>Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="text-sm font-medium text-slate-700" for="qty_mobile_{{ c.id }}">Antal</label>
-                    <input
-                      id="qty_mobile_{{ c.id }}"
-                      type="number"
-                      min="0"
-                      max="{{ c.available_items }}"
-                      step="1"
-                      value="0"
-                      name="qty_{{ c.id }}"
-                      inputmode="numeric"
-                      {% if disabled %}disabled{% endif %}
-                      data-booking-qty
-                      data-category-id="{{ c.id }}"
-                      data-category-name="{{ c.display_name }}"
-                      data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
-                      data-setup-fee="{{ c.setup_service_fee or 0 }}"
-                      data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
-                      data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
-                      data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                      class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-                    >
+                  <div class="pr-qty">
+                    <label class="pr-qty__label" for="qty_mobile_{{ c.id }}">Antal</label>
+                    <div class="pr-qty__ctl">
+                      <button type="button" class="pr-qty__btn" data-qty-step="-1" aria-label="En färre {{ c.display_name }}"{% if disabled %} disabled{% endif %}>−</button>
+                      <input
+                        id="qty_mobile_{{ c.id }}"
+                        type="number"
+                        min="0"
+                        max="{{ c.available_items }}"
+                        step="1"
+                        value="0"
+                        name="qty_{{ c.id }}"
+                        inputmode="numeric"
+                        {% if disabled %}disabled{% endif %}
+                        data-booking-qty
+                        data-category-id="{{ c.id }}"
+                        data-category-name="{{ c.display_name }}"
+                        data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
+                        data-setup-fee="{{ c.setup_service_fee or 0 }}"
+                        data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
+                        data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
+                        data-available-item-ids='{{ c.available_item_ids|tojson }}'
+                        class="pr-qty__input pr-num"
+                      >
+                      <button type="button" class="pr-qty__btn" data-qty-step="1" aria-label="En till {{ c.display_name }}"{% if disabled %} disabled{% endif %}>+</button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </article>
             {% endfor %}
           </div>
 
-          <div class="hidden overflow-hidden rounded-[1.5rem] border border-slate-200 md:block">
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-sm">
-                <thead class="bg-[linear-gradient(90deg,#ec4899_0%,#f472b6_72%,#22c55e_140%)] text-white">
-                  <tr>
-                    <th class="p-3 text-left font-medium">Kategori</th>
-                    <th class="p-3 text-left font-medium">Typ</th>
-                    <th class="p-3 text-left font-medium">Period</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Pris</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Lediga nu</th>
-                    <th class="p-3 text-left font-medium">Detaljer</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Antal</th>
-                  </tr>
-                </thead>
+          <div class="pr-table-wrap hidden md:block">
+            <table class="pr-table">
+              <thead>
+                <tr>
+                  <th class="pr-th pr-th--guests" data-sort-type="number">Max gäster</th>
+                  <th class="pr-th">Tält och tillbehör</th>
+                  <th class="pr-th">Hyrperiod</th>
+                  <th class="pr-th pr-th--num" data-sort-type="number">Pris</th>
+                  <th class="pr-th pr-th--num" data-sort-type="number">Lediga</th>
+                  <th class="pr-th pr-th--qty" data-sort-type="number">Antal</th>
+                </tr>
+              </thead>
 
-                <tbody class="divide-y divide-slate-200 bg-white">
-                  {% for c in categories %}
-                    {% set disabled = c.available_items == 0 or not c.has_standard_price %}
-                    <tr
-                      class="align-top"
-                      data-item-row
-                      data-client-list-item
-                      data-client-list-group="rows"
-                      data-search-text="{{ (
-                        c.display_name ~ ' ' ~
-                        ('tent ' if c.is_tent else '') ~
-                        ('furnishing ' if c.is_furnishing else '') ~
-                        (c.furnishing_kind or '') ~ ' ' ~
-                        (c.rental_period_label or '') ~ ' ' ~
-                        (c.notes or '')
-                      )|lower }}"
-                    >
-                      <td class="p-3">
-                        <div class="font-medium text-slate-900">{{ c.display_name }}</div>
-                        <div class="mt-1 text-xs text-slate-500">Kategori #{{ c.id }}</div>
-                      </td>
+              <tbody>
+                {% for c in categories %}
+                  {% set disabled = c.available_items == 0 or not c.has_standard_price %}
+                  {% set d = c|tent_dimensions if c.is_tent else None %}
+                  <tr
+                    class="pr-row{% if disabled %} is-disabled{% endif %}"
+                    data-item-row
+                    data-client-list-item
+                    data-client-list-group="rows"
+                    data-search-text="{{ (
+                      c.display_name ~ ' ' ~
+                      ('tent ' if c.is_tent else '') ~
+                      ('furnishing ' if c.is_furnishing else '') ~
+                      (c.furnishing_kind or '') ~ ' ' ~
+                      (c.rental_period_label or '') ~ ' ' ~
+                      (c.notes or '')
+                    )|lower }}"
+                  >
+                    <td class="pr-td pr-td--guests" data-sort-value="{{ c.capacity if c.is_tent and c.capacity else 0 }}">
+                      {% if c.is_tent and c.capacity %}<span class="pr-num">{{ c.capacity }}</span>{% endif %}
+                    </td>
 
-                      <td class="p-3">
-                        {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.rental_period_label }}</div>
-                          <div class="mt-1 text-xs text-slate-500">
-                            {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                              1 dag
+                    <td class="pr-td">
+                      <div class="pr-item">
+                        <div class="pr-item__fp">
+                          {% if d %}{{ pr.footprint(d, area=pr.area_of(c, d), max_len=pr_max_len, max_wid=pr_max_wid, size='thumb', draw=false) }}{% endif %}
+                        </div>
+                        <div class="pr-item__text">
+                          <div class="pr-item__name">{{ c.display_name }}</div>
+                          <div class="pr-item__sub">
+                            {% if c.is_tent %}
+                              {% if d %}<span class="pr-num">{{ pr.area_of(c, d) }}&nbsp;m²</span>{% endif %}
                             {% else %}
-                              {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
+                              {{ c.notes or '' }}
                             {% endif %}
                           </div>
-                        {% else %}
-                          <span class="text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
-                        {% endif %}
-                      </td>
+                        </div>
+                      </div>
+                    </td>
 
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                        {% else %}
-                          <span class="text-slate-400">Ej tillgänglig</span>
-                        {% endif %}
-                      </td>
+                    <td class="pr-td">
+                      {% if c.has_standard_price %}
+                        <div class="pr-period">{{ (c.rental_period_label or '')|replace('-', '–') }}</div>
+                      {% else %}
+                        <span class="pr-warn">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
+                      {% endif %}
+                    </td>
 
-                      <td class="p-3">
-                        {% if c.available_items > 0 %}
-                          <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                            <span class="font-medium text-slate-900" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
-                            <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
-                              <button
-                                type="button"
-                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-                                data-shared-stock-toggle
-                                aria-expanded="false"
-                                aria-label="Information om delat lager"
-                              >
-                                i
-                              </button>
-                              <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                                <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
-                              </div>
+                    <td class="pr-td pr-td--num" data-sort-value="{{ c.quoted_period_price if c.has_standard_price else 0 }}">
+                      {% if c.has_standard_price %}
+                        <span class="pr-num pr-amount">{{ c.quoted_period_price|sek }}</span>
+                        {% if c.is_tent and c.setup_service_fee %}<span class="pr-amount__sub">montering <span class="pr-num">{{ c.setup_service_fee|sek }}</span></span>{% endif %}
+                      {% else %}
+                        <span class="pr-muted">Ej tillgänglig</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="pr-td pr-td--num" data-sort-value="{{ c.available_items }}">
+                      {% if c.available_items > 0 %}
+                        <div class="pr-avail pr-avail--row">
+                          <span class="pr-avail__n pr-num" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
+                          <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
+                            <button
+                              type="button"
+                              class="pr-info"
+                              data-shared-stock-toggle
+                              aria-expanded="false"
+                              aria-label="Information om delat lager"
+                            >i</button>
+                            <div class="fixed z-[60] hidden pr-pop__panel pr-pop__panel--note" data-shared-stock-popover>
+                              <p class="pr-pop__title">Delat lager</p>
+                              <p class="pr-pop__text" data-shared-stock-message-for="{{ c.id }}"></p>
                             </div>
                           </div>
-                        {% else %}
-                          <span class="font-medium text-rose-600">0</span>
-                        {% endif %}
-                      </td>
+                        </div>
+                      {% else %}
+                        <span class="pr-avail__n pr-num is-none">0</span>
+                      {% endif %}
+                    </td>
 
-                      <td class="p-3 text-xs text-slate-600">
-                        {% if c.is_tent %}
-                          <div>Kapacitet: {{ c.capacity }}</div>
-                          <div class="mt-1">Säsong: {{ c.season_rating }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                        {% else %}
-                          <div>{{ c.furnishing_kind }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                          {% if c.weight_kg %}<div class="mt-1">Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
+                    <td class="pr-td pr-td--qty">
+                      <div class="pr-qty__ctl">
+                        <button type="button" class="pr-qty__btn" data-qty-step="-1" aria-label="En färre {{ c.display_name }}"{% if disabled %} disabled{% endif %}>−</button>
                         <input
                           type="number"
                           min="0"
@@ -267,6 +268,7 @@
                           value="0"
                           name="qty_{{ c.id }}"
                           inputmode="numeric"
+                          aria-label="Antal {{ c.display_name }}"
                           {% if disabled %}disabled{% endif %}
                           data-booking-qty
                           data-category-id="{{ c.id }}"
@@ -276,33 +278,25 @@
                           data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
                           data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
                           data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                          class="w-24 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                          class="pr-qty__input pr-num"
                         >
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+                        <button type="button" class="pr-qty__btn" data-qty-step="1" aria-label="En till {{ c.display_name }}"{% if disabled %} disabled{% endif %}>+</button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         {% endif %}
 
-        <div
-          class="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-          data-local-pager
-        >
-          <div class="text-sm text-slate-600">
-            <span data-pager-status>Visar 0 av 0</span>
-          </div>
+        <div class="pr-pager" data-local-pager>
+          <span class="pr-pager__status pr-num" data-pager-status>Visar 0 av 0</span>
 
-          <div class="grid gap-3 min-[420px]:grid-cols-[auto_1fr] min-[420px]:items-center lg:flex lg:items-center lg:justify-end">
-            <div class="flex items-center gap-2">
-              <label class="text-sm font-medium text-slate-700" for="items-per-page">Rader</label>
-              <select
-                id="items-per-page"
-                data-pager-per-page
-                class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-pink-400 focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
+          <div class="pr-pager__ctl">
+            <div class="pr-pager__rows">
+              <label for="items-per-page">Rader</label>
+              <select id="items-per-page" data-pager-per-page class="pr-field pr-field--sm">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="20">20</option>
@@ -310,302 +304,284 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 items-center gap-2 min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[420px]:justify-self-end sm:min-w-[18rem]">
-              <button
-                type="button"
-                data-pager-prev
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Föregående
-              </button>
-
-              <span
-                data-pager-page
-                class="hidden min-w-0 text-center text-sm font-medium text-slate-700 min-[420px]:block"
-              >
-                Sida 1 av 1
-              </span>
-
-              <button
-                type="button"
-                data-pager-next
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Nästa
-              </button>
+            <div class="pr-pager__nav">
+              <button type="button" data-pager-prev class="pr-btn pr-btn--line pr-btn--sm">Föregående</button>
+              <span data-pager-page class="pr-pager__page pr-num">Sida 1 av 1</span>
+              <button type="button" data-pager-next class="pr-btn pr-btn--line pr-btn--sm">Nästa</button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr_0.8fr] xl:items-start">
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 3</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Tjänster</h2>
-        </div>
+      <section class="pr-step" id="steg-3" data-pr-step-section="3" aria-labelledby="steg-3-title">
+        <header class="pr-step__head">
+          <span class="pr-step__no pr-num" aria-hidden="true">3</span>
+          <div>
+            <h2 class="pr-h2" id="steg-3-title">Leverans och montering</h2>
+            <p class="pr-step__lede">Båda är tillval. Utan leverans hämtar ni själva.</p>
+          </div>
+        </header>
 
-        <div class="space-y-5 px-6 py-6">
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
+        <div class="pr-step__body pr-options">
+          <label class="pr-option" for="include_delivery">
             <input
               type="checkbox"
               name="include_delivery"
               id="include_delivery"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
+              class="pr-check"
             >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera leverans</span>
-              <span class="mt-1 block">Vi validerar adressen och räknar ut avgiften utifrån körsträckan.</span>
-              <span class="mt-1 block text-xs text-slate-500">Adressvalidering och ruttberäkning använder Geoapify.</span>
+            <span class="pr-option__body">
+              <span class="pr-option__title">Leverans</span>
+              <span class="pr-option__text">Vi kör ut till adressen i steg 4. Priset räknas på körsträckan och syns i sammanfattningen innan du skickar.</span>
+              <span class="pr-option__fine">Adressen kontrolleras och rutten beräknas med Geoapify.</span>
             </span>
           </label>
 
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
+          <label class="pr-option" for="include_setup_service">
             <input
               type="checkbox"
               name="include_setup_service"
               id="include_setup_service"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
+              class="pr-check"
             >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera montering</span>
-              <span class="mt-1 block" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
+            <span class="pr-option__body">
+              <span class="pr-option__title">Montering</span>
+              <span class="pr-option__text" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
             </span>
           </label>
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="booking_note">Bokningsanteckning</label>
+          <div class="pr-fieldset pr-fieldset--note">
+            <label class="pr-label" for="booking_note">Meddelande till oss <span class="pr-optional">valfritt</span></label>
             <textarea
               id="booking_note"
               name="booking_note"
-              rows="4"
-              placeholder="Åtkomstinfo, tider, leveransinstruktioner..."
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              rows="3"
+              placeholder="Till exempel portkod, var tältet ska stå eller tider för leverans"
+              class="pr-field"
             ></textarea>
           </div>
         </div>
       </section>
 
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 4</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">
-            {% if role == "customer" and customer_profile %}Ditt konto{% else %}Skapa konto{% endif %}
-          </h2>
-        </div>
+      <section class="pr-step" id="steg-4" data-pr-step-section="4" aria-labelledby="steg-4-title">
+        <header class="pr-step__head">
+          <span class="pr-step__no pr-num" aria-hidden="true">4</span>
+          <div>
+            <h2 class="pr-h2" id="steg-4-title">{% if role == "customer" and customer_profile %}Ditt konto{% else %}Skapa konto{% endif %}</h2>
+            <p class="pr-step__lede">{% if role == "customer" and customer_profile %}Bokar som <strong>{{ customer_profile.full_name }}</strong>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.{% else %}Med ett konto ser du dina bokningar och deras status.{% endif %}</p>
+          </div>
+        </header>
 
-        <div class="space-y-4 px-6 py-6">
+        <div class="pr-step__body pr-form-grid">
           {% if role == "customer" and customer_profile %}
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-              Bokar som <span class="font-medium">{{ customer_profile.full_name }}</span>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.
-            </div>
-
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="phone">Telefon</label>
               <input
                 id="phone"
                 name="phone"
                 value="{{ customer_profile.phone or '' }}"
                 autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
           {% else %}
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="full_name">Fullständigt namn</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="full_name">För- och efternamn</label>
               <input
                 id="full_name"
                 name="full_name"
                 required
                 autocomplete="name"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
 
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="email">E-post</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
                 autocomplete="email"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
 
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="phone">Telefon</label>
               <input
                 id="phone"
                 name="phone"
                 autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
           {% endif %}
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="address">Adress för bokningen (gata)</label>
+          <div class="pr-fieldset pr-fieldset--wide">
+            <label class="pr-label" for="address">Gatuadress där tältet ska stå</label>
             <input
               id="address"
               name="address"
               type="text"
               value="{{ customer_profile.address if role == 'customer' and customer_profile and customer_profile.address else '' }}"
-              placeholder="T&auml;lt destination"
+              placeholder="Till exempel Östersjövägen 45"
               autocomplete="street-address"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              class="pr-field"
             >
           </div>
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="postal_city">Postort för bokningen</label>
+          <div class="pr-fieldset">
+            <label class="pr-label" for="postal_city">Postort</label>
             <input
               id="postal_city"
               name="postal_city"
               type="text"
               value="{{ customer_profile.postal_city if role == 'customer' and customer_profile and customer_profile.postal_city else '' }}"
-              placeholder="Postort f&ouml;r T&auml;lt destination"
+              placeholder="Till exempel Karlshamn"
               autocomplete="address-level2"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              class="pr-field"
             >
           </div>
 
           <p
             id="delivery-address-error"
-            class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            class="hidden pr-alert pr-alert--stop pr-fieldset--wide"
           ></p>
 
           {% if not (role == "customer" and customer_profile) %}
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="password">Lösenord</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="password">Lösenord</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
                 autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="password_confirm">Upprepa l&ouml;senord</label>
+            <div class="pr-fieldset">
+              <label class="pr-label" for="password_confirm">Upprepa lösenordet</label>
               <input
                 id="password_confirm"
                 name="password_confirm"
                 type="password"
                 required
                 autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="pr-field"
               >
             </div>
           {% endif %}
         </div>
       </section>
+    </div>
 
-      <section class="rounded-[2rem] border bg-green-50/50 text-slate-900 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-        <div class="border-b px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-green-400">Steg 5</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Sammanfattning</h2>
-        </div>
-
-        <div class="space-y-3 px-6 py-6 text-sm">
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Artiklar</span>
-            <span id="summary-items" class="font-semibold text-slate-950">0 valda</span>
+    <aside class="pr-summary" id="steg-5" data-pr-step-section="5" aria-labelledby="steg-5-title">
+      <div class="pr-summary__inner">
+        <header class="pr-summary__head">
+          <span class="pr-step__no pr-num" aria-hidden="true">5</span>
+          <div>
+            <h2 class="pr-h2" id="steg-5-title">Sammanfattning</h2>
+            <p class="pr-step__lede pr-num">{{ start_date|swedish_date_range(end_date)|replace('-', '–') }}</p>
           </div>
+        </header>
 
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Hyra</span>
-            <span id="summary-rental" class="font-semibold text-slate-950">0 kr</span>
+        <div class="pr-receipt">
+          <div class="pr-receipt__row flex">
+            <span>Artiklar</span>
+            <span id="summary-items" class="pr-num">0 valda</span>
           </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Montering</span>
-            <span id="summary-setup" class="font-semibold text-slate-950">Inte tillvalt</span>
+          <div class="pr-receipt__row flex">
+            <span>Hyra</span>
+            <span id="summary-rental" class="pr-num">0 kr</span>
           </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Leverans</span>
-            <span id="summary-delivery" class="font-semibold text-slate-950">Inte tillvalt</span>
+          <div class="pr-receipt__row flex">
+            <span>Montering</span>
+            <span id="summary-setup" class="pr-num">Inte tillvalt</span>
+          </div>
+          <div class="pr-receipt__row flex">
+            <span>Leverans</span>
+            <span id="summary-delivery" class="pr-num">Inte tillvalt</span>
           </div>
 
           {% if customer_furnishing_without_tent_surcharge_enabled %}
             <div id="summary-furnishing-surcharge-row" class="hidden">
-              <div class="flex items-center justify-between gap-4">
-                <span class="text-slate-500">Inredning utan tält (+25%)</span>
-                <span id="summary-furnishing-surcharge" class="font-semibold text-slate-950">0 kr</span>
+              <div class="pr-receipt__row flex">
+                <span>Inredning utan tält (+25%)</span>
+                <span id="summary-furnishing-surcharge" class="pr-num">0 kr</span>
               </div>
-              <div id="summary-furnishing-surcharge-note" class="mt-2 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p id="summary-furnishing-surcharge-note" class="hidden pr-alert pr-alert--wait">
                 Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
-              </div>
+              </p>
             </div>
           {% endif %}
 
           {% if customer_prices_include_vat %}
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-slate-500">Moms (25%)</span>
-              <span id="summary-vat" class="font-semibold text-slate-950">0 kr</span>
+            <div class="pr-receipt__row flex">
+              <span>Moms (25%)</span>
+              <span id="summary-vat" class="pr-num">0 kr</span>
             </div>
           {% endif %}
-
-          <div class="border-t border-pink-100 pt-3">
-            {% if customer_prices_include_vat %}
-              <div class="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span class="text-slate-500">Pris exkl. moms</span>
-                <span id="summary-subtotal" class="font-medium text-slate-900">0 kr</span>
-              </div>
-            {% endif %}
-            <div class="flex items-center justify-between gap-4 text-base font-semibold">
-              <span>{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Total{% endif %}</span>
-              <span id="summary-total" class="text-rose-600">0 kr</span>
-            </div>
-          </div>
-
-          <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
-            <div class="text-sm font-semibold text-slate-900">Hyresvillkor</div>
-            <p class="mt-1 text-xs leading-5 text-slate-600">
-              L&#228;s hyresvillkoren innan du skickar bokningen:
-              <a
-                href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-semibold text-rose-600 underline underline-offset-4"
-              >
-                &#214;ppna PDF
-              </a>
-            </p>
-
-            <label class="mt-3 flex items-start gap-3 text-sm text-slate-700" for="accept_rental_terms">
-              <input
-                type="checkbox"
-                id="accept_rental_terms"
-                name="accept_rental_terms"
-                value="1"
-                required
-                class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-              >
-              <span>Jag har l&#228;st och godk&#228;nner hyresvillkoren.</span>
-            </label>
-          </div>
-
-          <p id="form-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></p>
-
-          <button
-            type="submit"
-            class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-pink-300 disabled:hover:bg-pink-300"
-          >
-            {% if role == "customer" and customer_profile %}Skicka bokning{% else %}Skicka bokning och skapa konto{% endif %}
-          </button>
-
-          <p class="text-xs text-slate-500">
-            Bokningen skapas som väntande. Lagret reserveras tillfälligt tills personalen bekräftar den.
-          </p>
         </div>
-      </section>
+
+        <div class="pr-total">
+          {% if customer_prices_include_vat %}
+            <div class="pr-total__sub flex">
+              <span>Pris exkl. moms</span>
+              <span id="summary-subtotal" class="pr-num">0 kr</span>
+            </div>
+          {% endif %}
+          <div class="pr-total__main">
+            <span class="pr-total__label">{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Totalt{% endif %}</span>
+            <span class="pr-total__value">
+              <span id="summary-total" class="pr-num">0 kr</span>
+              <span class="pr-num pr-ticker" data-total-ticker aria-hidden="true" hidden></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="pr-terms">
+          <label class="pr-terms__check" for="accept_rental_terms">
+            <input
+              type="checkbox"
+              id="accept_rental_terms"
+              name="accept_rental_terms"
+              value="1"
+              required
+              class="pr-check"
+            >
+            <span>Jag har läst och godkänner <a href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}" target="_blank" rel="noopener noreferrer" class="pr-link">hyresvillkoren (PDF)</a>.</span>
+          </label>
+        </div>
+
+        <p id="form-error" class="hidden pr-alert pr-alert--stop"></p>
+
+        <button
+          type="submit"
+          class="pr-btn pr-btn--primary pr-btn--block pr-submit"
+        >
+          {% if role == "customer" and customer_profile %}Skicka bokning{% else %}Skicka bokning och skapa konto{% endif %}
+        </button>
+
+        <p class="pr-summary__note">
+          Bokningen skapas som väntande. Lagret reserveras tillfälligt tills vi har bekräftat den.
+        </p>
+      </div>
+    </aside>
+    </div>
+
+    <div class="pr-mobilebar" data-pr-mobilebar>
+      <div class="pr-mobilebar__total">
+        <span class="pr-mobilebar__k">{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Totalt{% endif %}</span>
+        <span class="pr-num pr-mobilebar__v" data-pr-mirror-total>0 kr</span>
+      </div>
+      <a class="pr-btn pr-btn--primary pr-btn--sm" href="#steg-5">Till sammanfattningen</a>
     </div>
   </form>
+  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -1095,152 +1071,152 @@
     });
   </script>
   {% else %}
-    <section class="mt-6 rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Sortiment</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Tillgängliga artiklar och priser</h2>
-            <p class="mt-2 max-w-2xl text-sm text-slate-600">
-              Välj datum ovan för exakt tillgänglighet och bokning.
-            </p>
-          </div>
+    {%- set pr_others = categories|rejectattr('is_tent')|list -%}
+    {%- set ns_land = namespace(lo=None, hi=None, extra_lo=None, setup_lo=None) -%}
+    {%- for t in pr_tents -%}
+      {%- for p in (t.all_period_prices or []) -%}
+        {%- if ns_land.lo is none or p.min_days < ns_land.lo -%}{%- set ns_land.lo = p.min_days -%}{%- endif -%}
+        {%- if ns_land.hi is none or p.max_days > ns_land.hi -%}{%- set ns_land.hi = p.max_days -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if t.setup_service_fee and (ns_land.setup_lo is none or t.setup_service_fee < ns_land.setup_lo) -%}{%- set ns_land.setup_lo = t.setup_service_fee -%}{%- endif -%}
+    {%- endfor -%}
+    {%- for o in pr_others -%}
+      {%- for p in (o.all_period_prices or []) -%}
+        {%- if ns_land.extra_lo is none or p.min_days < ns_land.extra_lo -%}{%- set ns_land.extra_lo = p.min_days -%}{%- endif -%}
+      {%- endfor -%}
+    {%- endfor -%}
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier visas
-          </div>
+    <section class="pr-section pr-how" aria-labelledby="how-title">
+      <div class="pr-wrap">
+        <h2 class="pr-h2" id="how-title">Så går bokningen till</h2>
+        <ol class="pr-how__steps">
+          <li class="pr-how__step">
+            <span class="pr-how__no pr-num" aria-hidden="true">1</span>
+            <h3 class="pr-h3">Välj datum</h3>
+            <p>Välj när festen är{% if ns_land.lo is not none %}. Tält hyrs i <span class="pr-num">{{ ns_land.lo }}</span> till <span class="pr-num">{{ ns_land.hi }}</span> dagar{% endif %}.</p>
+          </li>
+          <li class="pr-how__step">
+            <span class="pr-how__no pr-num" aria-hidden="true">2</span>
+            <h3 class="pr-h3">Välj tält och tillbehör</h3>
+            <p>Du ser vad som är ledigt de dagarna och vad det kostar för hela perioden.</p>
+          </li>
+          <li class="pr-how__step">
+            <span class="pr-how__no pr-num" aria-hidden="true">3</span>
+            <h3 class="pr-h3">Leverans och montering</h3>
+            <p>Lägg till leverans, priset räknas på körsträckan. Montering kan väljas till.</p>
+          </li>
+          <li class="pr-how__step">
+            <span class="pr-how__no pr-num" aria-hidden="true">4</span>
+            <h3 class="pr-h3">Vi bekräftar</h3>
+            <p>Bokningen är väntande tills vi har bekräftat den. Under tiden reserveras lagret.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    {% if categories|length == 0 %}
+      <section class="pr-section">
+        <div class="pr-wrap">
+          <p class="pr-empty">Sortimentet kunde inte visas just nu. Välj datum ovan eller ring oss på <a class="pr-link" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>.</p>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if pr_tents %}
+    <section class="pr-section pr-range" id="talt" aria-labelledby="range-title">
+      <div class="pr-wrap">
+        <header class="pr-section__head">
+          <h2 class="pr-h2" id="range-title">Tälten</h2>
+          <p class="pr-section__lede">Alla {{ pr_tents|length }} storlekar är ritade i samma skala. En ruta i ritningen är en kvadratmeter.</p>
+        </header>
+
+        <ul class="pr-range__grid" role="list">
+          {% for c in pr_tents %}
+            {% set d = c|tent_dimensions %}
+            <li class="pr-tent" id="talt-{{ c.id }}">
+              <div class="pr-tent__drawing">
+                {% if d %}{{ pr.footprint(d, area=pr.area_of(c, d), max_len=pr_max_len, max_wid=pr_max_wid) }}{% endif %}
+              </div>
+              <div class="pr-tent__body">
+                <h3 class="pr-tent__name">{{ c.display_name }}</h3>
+                {% if c.capacity %}<p class="pr-tent__spec">Upp till <span class="pr-num">{{ c.capacity }}</span> gäster</p>{% endif %}
+                {{ pr.price_block(c) }}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if pr_others %}
+    <section class="pr-section pr-extras" aria-labelledby="extras-title">
+      <div class="pr-wrap pr-extras__grid">
+        <header class="pr-extras__intro">
+          <h2 class="pr-h2" id="extras-title">Bord, stolar och ljus</h2>
+          <p class="pr-section__lede">Priset gäller per styck för hela hyresperioden{% if ns_land.extra_lo == 1 %}, som kan vara en enda dag{% endif %}. Hur många som är lediga ser du när du har valt datum.</p>
+          <img
+            class="pr-extras__photo"
+            src="{{ url_for('static', filename='img/planritning/stolar-rader-1200.jpg') }}"
+            srcset="{{ url_for('static', filename='img/planritning/stolar-rader-720.jpg') }} 720w, {{ url_for('static', filename='img/planritning/stolar-rader-1200.jpg') }} 1200w"
+            sizes="(min-width: 1024px) 400px, 100vw"
+            width="1200"
+            height="795"
+            loading="lazy"
+            decoding="async"
+            alt="Vita klappstolar i raka rader på en gräsmatta, sedda snett ovanifrån."
+          >
+        </header>
+
+        <ul class="pr-extras__list" role="list">
+          {% for c in pr_others %}
+            <li class="pr-extra">
+              <div class="pr-extra__id">
+                <h3 class="pr-extra__name">{{ c.display_name }}</h3>
+                {% if c.notes %}<p class="pr-extra__note">{{ c.notes }}</p>{% endif %}
+              </div>
+              {{ pr.price_block(c) }}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="pr-section pr-service" aria-labelledby="service-title">
+      <div class="pr-wrap pr-service__grid">
+        <div class="pr-service__photo">
+          <img
+            src="{{ url_for('static', filename='img/planritning/kada-talt-1600.jpg') }}"
+            srcset="{{ url_for('static', filename='img/planritning/kada-talt-900.jpg') }} 900w, {{ url_for('static', filename='img/planritning/kada-talt-1600.jpg') }} 1600w"
+            sizes="(min-width: 1024px) 640px, 100vw"
+            width="1600"
+            height="893"
+            loading="lazy"
+            decoding="async"
+            alt="Två personer från KADA framför ett vitt partytält med fönster i sidorna, uppställt på en gräsmatta en solig dag."
+          >
+        </div>
+        <div class="pr-service__text">
+          <h2 class="pr-h2" id="service-title">Leverans och montering</h2>
+          <p>Vi kör ut tält och tillbehör i Karlshamn och övriga Blekinge. Leveranspriset räknas på körsträckan när du skriver in adressen i bokningen, så du ser det innan du skickar.</p>
+          <p>Med leverans kan du också välja montering och nedmontering av tältet{% if ns_land.setup_lo is not none %}, från <span class="pr-num">{{ ns_land.setup_lo|sek }}</span> beroende på storlek{% endif %}. Väljer du montering hjälper vi även till med möbleringen.</p>
+          <p class="pr-service__pickup">Utan leverans hämtar ni själva.</p>
         </div>
       </div>
+    </section>
 
-      <div class="px-6 py-6 md:px-8">
-        {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier finns att visa just nu.</i>
-          </div>
-        {% else %}
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {% for c in categories %}
-              {% set furnishing_theme = c.is_furnishing %}
-              <article class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]">
-                <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                  <div>
-                    <h3 class="font-semibold text-slate-900">{{ c.display_name }}</h3>
-                    <div class="mt-2 hidden flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
-                  </div>
-
-                  <span class="inline-flex rounded-full border px-3 py-1 text-xs font-medium {% if furnishing_theme %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-pink-200 bg-pink-50 text-rose-600{% endif %}">
-                    {% if c.is_tent %}
-                      Tält
-                    {% elif c.is_furnishing %}
-                      Inredning
-                    {% else %}
-                      Kategori
-                    {% endif %}
-                  </span>
-                </div>
-
-                <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-4">
-                  {% if c.all_period_prices %}
-                    <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">Priser</div>
-                    {% set cheapest_price_row = (c.all_period_prices|sort(attribute='price')|first) %}
-                    <div class="mt-3">
-                      <div class="text-lg font-semibold text-slate-950">Från {{ cheapest_price_row.price }} kr</div>
-                      <div class="mt-1 text-xs text-slate-500">
-                        {{ cheapest_price_row.label }}
-                        {% if cheapest_price_row.min_days == 1 and cheapest_price_row.max_days == 1 %}
-                          • 1 dag
-                        {% else %}
-                          • {{ cheapest_price_row.min_days }}-{{ cheapest_price_row.max_days }} dagar
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="mt-3" data-price-popover-root>
-                      {% set price_option_count = c.all_period_prices|length + (1 if c.setup_service_fee else 0) %}
-                      <button
-                        type="button"
-                        data-price-popover-toggle
-                        aria-expanded="false"
-                        class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <span>Visa alla priser</span>
-                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          {{ price_option_count }} st
-                        </span>
-                      </button>
-
-                      <div
-                        class="fixed z-[80] hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
-                        data-price-popover-panel
-                      >
-                        <div class="mb-3 flex items-center justify-between gap-3">
-                          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                            Priser
-                          </div>
-                          <button
-                            type="button"
-                            data-price-popover-close
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 pb-0.5 text-sm font-semibold leading-none text-slate-600 transition hover:bg-slate-100"
-                            aria-label="Stäng prislista"
-                          >
-                            x
-                          </button>
-                        </div>
-
-                        <div class="space-y-2">
-                        {% for price_row in c.all_period_prices %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">{{ price_row.label }}</div>
-                              <div class="mt-1 text-xs text-slate-500">
-                                {% if price_row.min_days == 1 and price_row.max_days == 1 %}
-                                  1 dag
-                                {% else %}
-                                  {{ price_row.min_days }}-{{ price_row.max_days }} dagar
-                                {% endif %}
-                              </div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ price_row.price }} kr</div>
-                          </div>
-                        {% endfor %}
-                        {% if c.setup_service_fee %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">Montering</div>
-                              <div class="mt-1 text-xs text-slate-500">Tillkommer vid val av montering.</div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ c.setup_service_fee }} kr</div>
-                          </div>
-                        {% endif %}
-                      </div>
-                    </div>
-                  {% elif c.has_standard_price %}
-                    <div class="text-lg font-semibold text-slate-950">{{ c.quoted_period_price }} kr</div>
-                    <div class="mt-1 text-xs text-slate-500">
-                      {{ c.rental_period_label }}
-                      {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                        • 1 dag
-                      {% else %}
-                        • {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
-                      {% endif %}
-                    </div>
-                  {% else %}
-                    <div class="text-sm font-semibold text-amber-700">Standardpris saknas</div>
-                    <div class="mt-1 text-xs text-slate-500">Kontakta oss för prisuppgift.</div>
-                  {% endif %}
-                </div>
-
-                {% if c.is_tent %}
-                  <div class="mt-4 space-y-1 text-sm text-slate-600">
-                    <div>Kapacitet: {{ c.capacity }}</div>
-                    <div>Säsong: {{ c.season_rating }}</div>
-                  </div>
-                {% endif %}
-              </article>
-            {% endfor %}
-          </div>
-        {% endif %}
+    <section class="pr-section pr-help" aria-labelledby="help-title">
+      <div class="pr-wrap pr-help__grid">
+        <div>
+          <h2 class="pr-h2" id="help-title">Frågor innan du bokar?</h2>
+          <p class="pr-section__lede">Läs svaren om bokning, leverans och montering, eller hör av dig direkt.</p>
+        </div>
+        <div class="pr-help__actions">
+          <a class="pr-btn pr-btn--line" href="{{ url_for('routes.faq') }}">Vanliga frågor</a>
+          <a class="pr-help__contact pr-num" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>
+          <a class="pr-help__contact" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>
+        </div>
       </div>
     </section>
     <script>
