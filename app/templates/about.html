@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block content %}{% set _admin = active_role == 'admin' %}{% if _admin %}
   <section class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
     <div class="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
       <div class="border-b border-slate-200 bg-slate-50 lg:border-b-0 lg:border-r">
@@ -94,4 +94,72 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}
+<div class="pr-page pr-about">
+  <section class="pr-wrap pr-about__hero" aria-labelledby="about-title">
+    <div class="pr-about__copy">
+      <h1 class="pr-h1 pr-h1--page" id="about-title">Om oss</h1>
+      <p class="pr-lede">KADA PartyTillbehör hyr ut tält och festutrustning till fester, event och arrangemang i Blekinge.</p>
+    </div>
+    <figure class="pr-about__photo">
+      <img
+        src="{{ url_for('static', filename='img/planritning/kada-talt-1600.jpg') }}"
+        srcset="{{ url_for('static', filename='img/planritning/kada-talt-900.jpg') }} 900w, {{ url_for('static', filename='img/planritning/kada-talt-1600.jpg') }} 1600w"
+        sizes="(min-width: 1240px) 1176px, 100vw"
+        width="1600"
+        height="893"
+        alt="Två personer från KADA framför ett vitt partytält med fönster i sidorna, uppställt på en gräsmatta en solig dag."
+      >
+    </figure>
+  </section>
+
+  <section class="pr-section pr-about__story" aria-labelledby="story-title">
+    <div class="pr-wrap pr-about__cols">
+      <h2 class="pr-h2" id="story-title">Vi gör uthyrning enklare</h2>
+      <div class="pr-about__text">
+        <p>Vårt mål är att göra det enkelt att boka tält och annan festutrustning, så att man slipper fylla förråden hemma med saker man sällan använder.</p>
+        <p>Bokningen håller ihop datum, lagerstatus och priser. Systemet kontrollerar bokningen i förväg, så när vi bekräftar den är förutsättningarna nästan alltid redan på plats.</p>
+        <p>Oavsett om du planerar en mindre privat tillställning eller ett större arrangemang är tanken densamma: tydlig information, lätt att hitta och boka, och en smidig väg från förfrågan till leverans.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pr-section pr-about__offer" aria-labelledby="offer-title">
+    <div class="pr-wrap">
+      <h2 class="pr-h2" id="offer-title">Det här erbjuder vi</h2>
+      <ul class="pr-offer" role="list">
+        <li class="pr-offer__item">
+          <h3 class="pr-h3">Tält och festutrustning</h3>
+          <p>Uthyrning för både mindre och större arrangemang.</p>
+        </li>
+        <li class="pr-offer__item">
+          <h3 class="pr-h3">Lediga datum direkt</h3>
+          <p>Tillgängligheten syns i bokningen, så du ser snabbt vad som går att reservera.</p>
+        </li>
+        <li class="pr-offer__item">
+          <h3 class="pr-h3">Leverans till festen</h3>
+          <p>Priset räknas på adressen och körsträckan.</p>
+        </li>
+        <li class="pr-offer__item">
+          <h3 class="pr-h3">Montering och nedmontering</h3>
+          <p>För tältet, när du vill ha en mer komplett lösning.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="pr-section pr-help" aria-labelledby="about-contact-title">
+    <div class="pr-wrap pr-help__grid">
+      <div>
+        <h2 class="pr-h2" id="about-contact-title">Kom i kontakt med oss</h2>
+        <p class="pr-section__lede">Frågor om tillgänglighet, planering eller en kommande bokning? Hör av dig. Vet du redan datumen kan du se lediga tält direkt.</p>
+      </div>
+      <div class="pr-help__actions">
+        <a class="pr-btn pr-btn--primary" href="{{ url_for('routes.home') }}">Se lediga tält</a>
+        <a class="pr-help__contact pr-num" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a>
+        <a class="pr-help__contact" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endif %}{% endblock %}

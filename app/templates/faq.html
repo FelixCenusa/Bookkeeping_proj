@@ -21,7 +21,7 @@
   </script>
 {% endblock %}
 
-{% block content %}
+{% block content %}{% set _admin = active_role == 'admin' %}{% if _admin %}
   <section class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_52%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
     <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
     <div class="absolute right-10 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
@@ -92,4 +92,37 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}
+<div class="pr-page pr-faq">
+  <div class="pr-wrap pr-faq__grid">
+    <header class="pr-faq__intro">
+      <h1 class="pr-h1 pr-h1--page">Vanliga frågor</h1>
+      <p class="pr-lede">Svar om bokning, leverans, montering och hur uthyrningen fungerar hos KADA PartyTillbehör.</p>
+
+      <div class="pr-contact">
+        <h2 class="pr-contact__title">Hittar du inte svaret?</h2>
+        <p class="pr-contact__text">Ring eller mejla oss om ett event, en större uthyrning eller särskilda önskemål.</p>
+        <ul class="pr-contact__list" role="list">
+          <li><span class="pr-contact__k">Telefon</span><a class="pr-contact__v pr-num" href="tel:0730813710">073-081&nbsp;37&nbsp;10</a></li>
+          <li><span class="pr-contact__k">E-post</span><a class="pr-contact__v" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a></li>
+        </ul>
+        <a class="pr-btn pr-btn--primary" href="{{ url_for('routes.home') }}">Välj datum och boka</a>
+      </div>
+    </header>
+
+    <div class="pr-faq__list">
+      {% for item in faq_items %}
+        <details class="pr-qa"{% if loop.first %} open{% endif %}>
+          <summary class="pr-qa__q">
+            <span>{{ item.question }}</span>
+            <span class="pr-qa__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="pr-qa__a">
+            <p>{{ item.answer }}</p>
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}{% endblock %}
