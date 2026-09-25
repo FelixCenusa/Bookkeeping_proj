@@ -21,7 +21,7 @@
   </script>
 {% endblock %}
 
-{% block content %}
+{% block content %}{% if is_admin_view %}
   <section class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_52%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
     <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
     <div class="absolute right-10 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
@@ -92,4 +92,48 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}
+  <section class="sk-pagehead">
+    <div class="sk-container sk-pagehead__grid">
+      <div>
+        <h1 class="sk-h1">Vanliga frågor</h1>
+        <p class="sk-lead mt-5">Om bokning, leverans, montering och vad som händer när du har skickat in en bokning.</p>
+      </div>
+      <figure class="sk-pagehead__photo">
+        <img
+          src="{{ url_for('static', filename='img/solsken/midsommarstang.jpg') }}"
+          width="1400"
+          height="933"
+          alt="Midsommarstång klädd i löv på en äng en solig sommardag"
+          decoding="async"
+        >
+        <div class="sk-valance" aria-hidden="true">{% for i in range(40) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sk-section sk-section--flush-top">
+    <div class="sk-container sk-faq">
+      <div class="sk-faq__list">
+        {% for item in faq_items %}
+          <details class="sk-qa" id="fraga-{{ loop.index }}">
+            <summary><span class="sk-qa__mark" aria-hidden="true"></span><span>{{ item.question }}</span></summary>
+            <div class="sk-qa__answer">
+              <p>{{ item.answer }}</p>
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+
+      <aside class="sk-faq__aside" aria-labelledby="faq-kontakt">
+        <h2 class="sk-h3" id="faq-kontakt">Hittar du inte svaret?</h2>
+        <p class="sk-muted mt-2">Fråga oss om en fest, en större uthyrning eller något speciellt du behöver.</p>
+        <div class="sk-contact mt-6">
+          <a href="tel:0730813710"><span class="sk-contact__label">Telefon</span><span class="sk-contact__value">073-081 37 10</span></a>
+          <a href="mailto:kadaparty@kadaparty.se"><span class="sk-contact__label">E-post</span><span class="sk-contact__value">kadaparty@kadaparty.se</span></a>
+        </div>
+        <a class="sk-btn sk-btn--primary mt-8" href="{{ url_for('routes.home') }}#availability-search-form">Välj datum och boka</a>
+      </aside>
+    </div>
+  </section>
+{% endif %}{% endblock %}

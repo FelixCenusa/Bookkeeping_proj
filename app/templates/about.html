@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block content %}{% if is_admin_view %}
   <section class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
     <div class="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
       <div class="border-b border-slate-200 bg-slate-50 lg:border-b-0 lg:border-r">
@@ -94,4 +94,76 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}
+  <section class="sk-pagehead sk-pagehead--about">
+    <div class="sk-container">
+      <h1 class="sk-h1">Om oss</h1>
+      <p class="sk-lead mt-5">KADA PartyTillbehör hyr ut tält och festutrustning till fester och arrangemang i Karlshamn och övriga Blekinge.</p>
+    </div>
+    <div class="sk-container mt-10 lg:mt-14">
+      <figure class="sk-aboutphoto">
+        <img
+          src="{{ url_for('static', filename='img/solsken/kada-talt-om-oss.jpg') }}"
+          width="1600"
+          height="893"
+          alt="Två personer framför ett uppsatt vitt partytält med fönsterväggar i en trädgård"
+          decoding="async"
+        >
+        <div class="sk-valance" aria-hidden="true">{% for i in range(64) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sk-section sk-section--flush-top">
+    <div class="sk-container sk-about">
+      <div class="sk-about__text">
+        <h2 class="sk-h2"><span class="sk-wipe sk-wipe--sun">Vi gör uthyrning enklare</span></h2>
+        <div class="sk-prose mt-6">
+          <p>Vårt mål är att göra det enkelt att hyra tält och festutrustning, så att ni slipper fylla förråden med saker ni sällan använder.</p>
+          <p>Bokningen håller ihop datum, lager och priser. Den kontrolleras redan när du skickar in den, så när vi bekräftar är förutsättningarna nästan alltid på plats.</p>
+          <p>Oavsett om ni planerar en mindre fest eller ett större arrangemang är tanken densamma: tydlig information, enkelt att hitta och boka, och en smidig väg från förfrågan till leverans.</p>
+        </div>
+      </div>
+
+      <div class="sk-about__offer">
+        <h2 class="sk-h3">Det här erbjuder vi</h2>
+        <dl class="sk-offer">
+          <div>
+            <dt>Tält och festutrustning</dt>
+            <dd>Tält, bord, stolar, bänkset och ljusslingor för både mindre och större fester.</dd>
+          </div>
+          <div>
+            <dt>Tillgänglighet direkt</dt>
+            <dd>Du ser vad som är ledigt när du väljer datum, innan du bokar.</dd>
+          </div>
+          <div>
+            <dt>Leverans</dt>
+            <dd>Vi kör ut till festen. Priset räknas ut efter adress och körsträcka.</dd>
+          </div>
+          <div>
+            <dt>Montering</dt>
+            <dd>Vi sätter upp och tar ner tältet när du vill ha allt klart.</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="sk-section sk-section--flush-top">
+    <div class="sk-container">
+      <div class="sk-callout sk-scallop sk-bg-sun">
+        <div class="sk-callout__grid">
+          <div>
+            <h2 class="sk-h2">Hör av dig</h2>
+            <p class="mt-4 max-w-[40ch]">Frågor om tillgänglighet, planering eller en bokning du redan har gjort? Ring eller mejla.</p>
+          </div>
+          <div class="sk-contact sk-contact--on-sun">
+            <a href="tel:0730813710"><span class="sk-contact__label">Telefon</span><span class="sk-contact__value">073-081 37 10</span></a>
+            <a href="mailto:kadaparty@kadaparty.se"><span class="sk-contact__label">E-post</span><span class="sk-contact__value">kadaparty@kadaparty.se</span></a>
+            <p class="sk-contact__plain"><span class="sk-contact__label">Adress</span><span>Östersjövägen 45, 374 31 Karlshamn</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endif %}{% endblock %}
