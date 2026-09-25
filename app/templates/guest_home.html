@@ -12,144 +12,103 @@
 {% endblock %}
 
 {% block content %}
-<section class="mx-auto max-w-6xl">
-  <div class="flex flex-col gap-4 lg:flex-row">
-    <div class="relative min-w-0 flex-1 overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_50%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-      <div class="absolute -left-12 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="absolute right-8 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-      <div class="absolute bottom-0 right-0 h-40 w-40 translate-x-1/4 translate-y-1/4 rounded-full bg-pink-100/55"></div>
+<section class="sk-hero">
+  <div class="sk-container sk-hero__grid">
+    <div class="sk-hero__copy">
+      <h1 class="sk-display">Hyr tält till festen.</h1>
+      <p class="sk-lead mt-5 md:mt-6">
+        Studenten, midsommar eller kalaset? Välj datum så ser du direkt vilka tält och möbler som är lediga, med pris.
+      </p>
 
-      <div class="relative px-4 py-8 md:px-5">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-            KADA PartyTillbehör
-          </div>
-
-          <h1 class="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
-            Sök bland våra artiklar och boka direkt.
-          </h1>
-
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 md:text-base">
-            Här visas alla artiklar med standardpris och tillgänglighet. Tält kan hyras ut från 3 till 7 dagar, om ni behöver hyra längre kontakta oss på:
-            <a
-              href="mailto:kadaparty@kadaparty.se"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              kadaparty@kadaparty.se
-            </a>
-            eller via telefon:
-            <a
-              href="tel:0730813710"
-              class="font-bold underline underline-offset-4 text-rose-600"
-            >
-              0730813710
-            </a>
-          </p>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700">
-            KADA PartyTillbeh&#246;r erbjuder t&#228;ltuthyrning, partyt&#228;lt och festutrustning f&#246;r party och fest i Karlshamn och &#246;vriga Blekinge.
-          </p>
+      <div class="sk-datepanel mt-8 md:mt-10">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 class="sk-steptag m-0"><span class="sk-steptag__n">1</span>Välj datum</h2>
+          {% if public_booking_lead_days > 0 %}
+            <p class="sk-tiny m-0">Boka minst {{ public_booking_lead_days }} {{ "dag" if public_booking_lead_days == 1 else "dagar" }} i förväg.</p>
+          {% endif %}
         </div>
 
-        <div class="mt-5 grid gap-3 sm:grid-cols-[28%_29%_40%]">
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Tillgänglighet</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Boka nu och få det levererat och monterat till festen</div>
-          </div>
-
-          <div class="rounded-2xl border border-pink-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Priser</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">De bästa priserna i Blekinge</div>
-          </div>
-
-          <div class="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Leverans</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Vi erbjuder också leverans ända fram! Bara lägg till leverans i kundvagnen så räknar vi priset åt dig!</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8 lg:w-[371px] lg:flex-none">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-bold text-slate-950">Välj datum</h2>
-          <p class="mt-1 text-sm text-slate-600">
-            {% if public_booking_lead_days > 0 %}
-              Välj hyresperiod minst {{ public_booking_lead_days }} {{ "dag" if public_booking_lead_days == 1 else "dagar" }} framåt för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% else %}
-              Välj hyresperiod för exakt tillgänglighet. Sortiment och standardpriser visas redan nedan.
-            {% endif %}
-          </p>
-        </div>
-        <div class="rounded-full bg-pink-500 px-3 py-1 text-xs font-medium text-white shadow-sm whitespace-nowrap">Steg 1</div>
-      </div>
-
-      <form
-        id="availability-search-form"
-        method="get"
-        action="{{ url_for('routes.home') }}"
-        class="mt-5 grid gap-4"
-        data-date-range
-        data-date-range-calendar="themed"
-        data-date-range-locale="sv"
-        data-date-range-min="{{ min_date }}"
-      >
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="start_date">Från datum</label>
-          <input
-            id="start_date"
-            type="text"
-            name="start_date"
-            value="{{ start_date }}"
-            required
-            readonly
-            inputmode="numeric"
-            autocomplete="off"
-            placeholder="YYYY-MM-DD"
-            pattern="\d{4}-\d{2}-\d{2}"
-            data-date-range-start
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-          >
-        </div>
-
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="end_date">Till datum</label>
-          <input
-            id="end_date"
-            type="text"
-            name="end_date"
-            value="{{ end_date }}"
-            required
-            readonly
-            inputmode="numeric"
-            autocomplete="off"
-            placeholder="YYYY-MM-DD"
-            pattern="\d{4}-\d{2}-\d{2}"
-            data-date-range-end
-            class="mt-1 w-full cursor-pointer rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-          >
-        </div>
-
-        <button
-          type="submit"
-          class="inline-flex items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100"
+        <form
+          id="availability-search-form"
+          method="get"
+          action="{{ url_for('routes.home') }}"
+          class="sk-datepanel__fields mt-4"
+          data-date-range
+          data-date-range-calendar="themed"
+          data-date-range-locale="sv"
+          data-date-range-min="{{ min_date }}"
         >
-          Sök tillgänglighet
-        </button>
+          <div class="min-w-0">
+            <label class="sk-label" for="start_date">Från</label>
+            <input
+              id="start_date"
+              type="text"
+              name="start_date"
+              value="{{ start_date }}"
+              required
+              readonly
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Välj dag"
+              pattern="\d{4}-\d{2}-\d{2}"
+              data-date-range-start
+              class="sk-input"
+            >
+          </div>
 
-        <p
-          id="availability-search-error"
-          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-        ></p>
-      </form>
+          <div class="min-w-0">
+            <label class="sk-label" for="end_date">Till</label>
+            <input
+              id="end_date"
+              type="text"
+              name="end_date"
+              value="{{ end_date }}"
+              required
+              readonly
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Välj dag"
+              pattern="\d{4}-\d{2}-\d{2}"
+              data-date-range-end
+              class="sk-input"
+            >
+          </div>
+
+          <button type="submit" class="sk-btn sk-btn--primary">Visa lediga tält</button>
+
+          <p
+            id="availability-search-error"
+            class="hidden sk-alert col-span-full m-0"
+            role="alert"
+          ></p>
+        </form>
+      </div>
 
       {% if role == "customer" and customer_profile %}
-        <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-          Inloggad som <span class="font-medium">{{ customer_profile.full_name }}</span>.
-          Nya bokningar läggs på ditt befintliga konto.
-        </div>
+        <p class="sk-note mt-5">Inloggad som <strong>{{ customer_profile.full_name }}</strong>. Bokningen läggs på ditt konto.</p>
       {% endif %}
+
+      <p class="sk-small sk-muted mt-4 max-w-[52ch]">
+        Tält hyrs 3 till 7 dagar. Behöver ni längre? Ring
+        <a class="sk-link" href="tel:0730813710">073-081 37 10</a>
+        eller mejla
+        <a class="sk-link" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>.
+      </p>
     </div>
+
+    <figure class="sk-hero__photo">
+      <img
+        src="{{ url_for('static', filename='img/solsken/hero-marquee-lawn-sun-900.jpg') }}"
+        srcset="{{ url_for('static', filename='img/solsken/hero-marquee-lawn-sun-900.jpg') }} 900w, {{ url_for('static', filename='img/solsken/hero-marquee-lawn-sun-1600.jpg') }} 1600w"
+        sizes="(min-width: 1024px) 40vw, 100vw"
+        width="1600"
+        height="1066"
+        alt="Vitt partytält med fönsterväggar på en gräsmatta en solig sommardag"
+        fetchpriority="high"
+        decoding="async"
+      >
+      <div class="sk-valance" aria-hidden="true">{% for i in range(40) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+    </figure>
   </div>
 </section>
 

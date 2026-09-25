@@ -1,11 +1,97 @@
 {% import "_components.html" as ui with context %}
 
+{% macro sk_period(min_days, max_days) -%}
+  {%- if min_days == max_days -%}{{ min_days }} {{ "dag" if min_days == 1 else "dagar" }}{%- else -%}{{ min_days }}–{{ max_days }} dagar{%- endif -%}
+{%- endmacro %}
+
+{% macro sk_price_panel(c) %}
+                    <div class="fixed z-[80] hidden sk-popover" data-price-popover-panel>
+                      <div class="sk-popover__head">
+                        <strong>{{ c.display_name }}</strong>
+                        <button type="button" data-price-popover-close class="sk-popover__close" aria-label="Stäng prislista">×</button>
+                      </div>
+                      {% for price_row in c.all_period_prices|sort(attribute='min_days') %}
+                        <div class="sk-popover__row">
+                          <span>{{ sk_period(price_row.min_days, price_row.max_days) }}</span>
+                          <strong class="sk-num">{{ price_row.price|sek }}</strong>
+                        </div>
+                      {% endfor %}
+                      {% if c.setup_service_fee %}
+                        <div class="sk-popover__row">
+                          <span>Montering</span>
+                          <strong class="sk-num">{{ c.setup_service_fee|sek }}</strong>
+                        </div>
+                      {% endif %}
+                    </div>
+{% endmacro %}
+
+{% macro sk_item_detail(c) -%}
+  {%- if c.is_tent -%}
+    {%- if c.capacity -%}Upp till {{ c.capacity }} gäster{%- endif -%}
+    {%- if c.setup_service_fee -%}{{ ", " if c.capacity else "" }}montering {{ c.setup_service_fee|sek }}{%- endif -%}
+  {%- else -%}
+    {{- c.notes or "" -}}
+    {%- if c.setup_service_fee -%}{{ ", " if c.notes else "" }}montering {{ c.setup_service_fee|sek }}{%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro sk_shared_stock(c) %}
+<div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
+  <button
+    type="button"
+    class="sk-info"
+    data-shared-stock-toggle
+    aria-expanded="false"
+    aria-label="Information om delat lager"
+  >i</button>
+  <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] sk-popover sk-popover--info" data-shared-stock-popover>
+    <strong class="block">Delat lager</strong>
+    <div class="mt-1 sk-small" data-shared-stock-message-for="{{ c.id }}"></div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro sk_qty_input(c, disabled, mobile) %}
+<div class="sk-stepper" data-sk-stepper>
+  <button type="button" class="sk-stepper__btn" data-sk-step="down" aria-label="En färre, {{ c.display_name }}" tabindex="-1">−</button>
+  {% if mobile %}<label class="sr-only" for="qty_mobile_{{ c.id }}">Antal, {{ c.display_name }}</label>{% endif %}
+  <input
+    {% if mobile %}id="qty_mobile_{{ c.id }}"{% else %}aria-label="Antal, {{ c.display_name }}"{% endif %}
+    type="number"
+    min="0"
+    max="{{ c.available_items }}"
+    step="1"
+    value="0"
+    name="qty_{{ c.id }}"
+    inputmode="numeric"
+    {% if disabled %}disabled{% endif %}
+    data-booking-qty
+    data-category-id="{{ c.id }}"
+    data-category-name="{{ c.display_name }}"
+    data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
+    data-setup-fee="{{ c.setup_service_fee or 0 }}"
+    data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
+    data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
+    data-available-item-ids='{{ c.available_item_ids|tojson }}'
+  >
+  <button type="button" class="sk-stepper__btn" data-sk-step="up" aria-label="En till, {{ c.display_name }}" tabindex="-1">+</button>
+</div>
+{% endmacro %}
+
 {% if categories is not none %}
   {% if has_selected_dates %}
+  <div class="sk-datebar">
+    <div class="sk-container sk-datebar__inner">
+      <p class="sk-datebar__text">Era datum <strong class="sk-datebar__dates">{{ start_date|swedish_date_range(end_date) }}</strong></p>
+      <a href="#availability-search-form" class="sk-datebar__edit" data-sk-edit-dates>Ändra datum</a>
+    </div>
+  </div>
+
+  <div class="sk-container sk-flow">
   <form
     method="post"
     action="{{ url_for('routes.guest_booking_create') }}"
-    class="mt-6 space-y-6"
+    class="sk-flow__grid"
     id="guest-booking-form"
     novalidate
     data-delivery-quote-url="{{ url_for('routes.guest_delivery_quote') }}"
@@ -13,58 +99,45 @@
     <input type="hidden" name="start_date" value="{{ start_date }}">
     <input type="hidden" name="end_date" value="{{ end_date }}">
 
-    <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]" data-client-list>
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 2</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Välj artiklar</h2>
-          </div>
+    <div class="sk-flow__main">
+    <section class="sk-step" id="steg-2" aria-labelledby="steg-2-title" data-client-list>
+      <header class="sk-step__bar sk-scallop sk-bg-teal">
+        <span class="sk-step__label">Steg 2</span>
+        <h2 class="sk-step__title" id="steg-2-title">Välj tält och möbler</h2>
+      </header>
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier hittades
-          </div>
-        </div>
-
+      <div class="sk-step__body">
         {% if categories|length > 0 %}
-          <div class="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div class="max-w-xl">
-              <label class="text-sm font-medium text-slate-700" for="item-search-input">Sök artiklar</label>
-              <p class="mt-1 text-xs text-slate-500">Filtrera på namn, typ, hyresperiod eller detaljer.</p>
-            </div>
-
-            <div class="flex w-full flex-col gap-3 sm:flex-row lg:max-w-2xl lg:items-center">
+          <div class="sk-search">
+            <div class="min-w-0">
+              <label class="sk-label" for="item-search-input">Sök bland artiklarna</label>
               <input
                 id="item-search-input"
                 type="search"
                 data-client-list-search
-                placeholder="Sök tält, inredning, priser..."
-                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                placeholder="Tält, stolar, bord eller ljus"
+                class="sk-input"
               >
-              <div
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-pink-200 bg-pink-50 px-3 py-2 text-xs font-medium text-rose-500 shadow-sm"
-                id="item-search-count"
-                data-client-list-count
-                data-client-list-count-suffix="visas"
-              >
-                {{ categories|length }} visas
-              </div>
+            </div>
+            <div
+              class="sk-count"
+              id="item-search-count"
+              data-client-list-count
+              data-client-list-count-suffix="visas"
+            >
+              {{ categories|length }} visas
             </div>
           </div>
         {% endif %}
-      </div>
 
-      <div class="px-6 py-6 md:px-8">
         {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier är tillgängliga för de datumen.</i>
-          </div>
+          <p class="sk-empty">Inget är ledigt de här datumen. Prova andra datum eller ring <a class="sk-link" href="tel:0730813710">073-081 37 10</a>.</p>
         {% else %}
-          <div class="grid gap-4 md:hidden">
+          <div class="sk-items xl:hidden">
             {% for c in categories %}
               {% set disabled = c.available_items == 0 or not c.has_standard_price %}
               <div
-                class="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(180deg,#fffdfd_0%,#ffffff_100%)] p-4 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]"
+                class="sk-item{% if disabled %} sk-item--off{% endif %}"
                 data-item-card
                 data-client-list-item
                 data-client-list-group="cards"
@@ -77,232 +150,113 @@
                   (c.notes or '')
                 )|lower }}"
               >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <div class="font-semibold text-slate-900">{{ c.display_name }}</div>
-                    <div class="mt-1 flex flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
+                <div class="sk-item__head">
+                  <div class="min-w-0">
+                    <div class="sk-item__name">{{ c.display_name }}</div>
+                    {% set detail = sk_item_detail(c) %}
+                    {% if detail|trim %}<div class="sk-item__sub">{{ detail }}</div>{% endif %}
                   </div>
 
-                  <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                    <span class="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700" data-availability-strict-for="{{ c.id }}">
-                      {{ c.available_items }} lediga
-                    </span>
-                    <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
-                      <button
-                        type="button"
-                        class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-                        data-shared-stock-toggle
-                        aria-expanded="false"
-                        aria-label="Information om delat lager"
-                      >
-                        i
-                      </button>
-                      <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                        <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
-                      </div>
-                    </div>
+                  <div class="inline-flex flex-none items-center gap-1.5">
+                    <span class="sk-avail{% if c.available_items == 0 %} sk-avail--none{% endif %}" data-availability-strict-for="{{ c.id }}">{{ c.available_items }} lediga</span>
+                    {{ sk_shared_stock(c) }}
                   </div>
                 </div>
 
-                <div class="mt-4 grid gap-3 text-sm text-slate-600">
-                  <div>
+                <div class="sk-item__foot">
+                  <div class="min-w-0">
                     {% if c.has_standard_price %}
-                      <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                      <div class="text-xs text-slate-500">{{ c.rental_period_label }}</div>
+                      <div class="sk-price sk-num">{{ c.quoted_period_price|sek }}</div>
+                      <div class="sk-price-period">{{ sk_period(c.rental_period_min_days, c.rental_period_max_days) }}</div>
                     {% else %}
-                      <div class="font-medium text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</div>
+                      <div class="sk-item__warn">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</div>
                     {% endif %}
                   </div>
-
-                  <div class="space-y-1">
-                    {% if c.is_tent %}
-                      <div>Kapacitet: {{ c.capacity }}</div>
-                      <div>Säsong: {{ c.season_rating }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                    {% else %}
-                      <div>{{ c.furnishing_kind }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                      {% if c.weight_kg %}<div>Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="text-sm font-medium text-slate-700" for="qty_mobile_{{ c.id }}">Antal</label>
-                    <input
-                      id="qty_mobile_{{ c.id }}"
-                      type="number"
-                      min="0"
-                      max="{{ c.available_items }}"
-                      step="1"
-                      value="0"
-                      name="qty_{{ c.id }}"
-                      inputmode="numeric"
-                      {% if disabled %}disabled{% endif %}
-                      data-booking-qty
-                      data-category-id="{{ c.id }}"
-                      data-category-name="{{ c.display_name }}"
-                      data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
-                      data-setup-fee="{{ c.setup_service_fee or 0 }}"
-                      data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
-                      data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
-                      data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                      class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-                    >
-                  </div>
+                  {{ sk_qty_input(c, disabled, true) }}
                 </div>
               </div>
             {% endfor %}
           </div>
 
-          <div class="hidden overflow-hidden rounded-[1.5rem] border border-slate-200 md:block">
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-sm">
-                <thead class="bg-[linear-gradient(90deg,#ec4899_0%,#f472b6_72%,#22c55e_140%)] text-white">
-                  <tr>
-                    <th class="p-3 text-left font-medium">Kategori</th>
-                    <th class="p-3 text-left font-medium">Typ</th>
-                    <th class="p-3 text-left font-medium">Period</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Pris</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Lediga nu</th>
-                    <th class="p-3 text-left font-medium">Detaljer</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Antal</th>
+          <div class="hidden xl:block">
+            <table class="sk-table">
+              <thead>
+                <tr>
+                  <th scope="col">Artikel</th>
+                  <th scope="col">Period</th>
+                  <th scope="col" data-sort-type="number">Pris</th>
+                  <th scope="col" data-sort-type="number">Lediga</th>
+                  <th scope="col" data-sort-type="number" class="sk-table__qty">Antal</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for c in categories %}
+                  {% set disabled = c.available_items == 0 or not c.has_standard_price %}
+                  <tr
+                    class="{% if disabled %}sk-row--off{% endif %}"
+                    data-item-row
+                    data-client-list-item
+                    data-client-list-group="rows"
+                    data-search-text="{{ (
+                      c.display_name ~ ' ' ~
+                      ('tent ' if c.is_tent else '') ~
+                      ('furnishing ' if c.is_furnishing else '') ~
+                      (c.furnishing_kind or '') ~ ' ' ~
+                      (c.rental_period_label or '') ~ ' ' ~
+                      (c.notes or '')
+                    )|lower }}"
+                  >
+                    <td>
+                      <div class="sk-item__name">{{ c.display_name }}</div>
+                      {% set detail = sk_item_detail(c) %}
+                      {% if detail|trim %}<div class="sk-item__sub">{{ detail }}</div>{% endif %}
+                    </td>
+
+                    <td class="whitespace-nowrap">
+                      {% if c.has_standard_price %}
+                        {{ sk_period(c.rental_period_min_days, c.rental_period_max_days) }}
+                      {% else %}
+                        <span class="sk-item__warn">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="whitespace-nowrap">
+                      {% if c.has_standard_price %}
+                        <span class="sk-price sk-num">{{ c.quoted_period_price|sek }}</span>
+                      {% else %}
+                        <span class="sk-muted">Ej tillgänglig</span>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if c.available_items > 0 %}
+                        <div class="inline-flex items-center gap-1.5">
+                          <span class="sk-avail" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
+                          {{ sk_shared_stock(c) }}
+                        </div>
+                      {% else %}
+                        <span class="sk-avail sk-avail--none">0</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="sk-table__qty">
+                      {{ sk_qty_input(c, disabled, false) }}
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody class="divide-y divide-slate-200 bg-white">
-                  {% for c in categories %}
-                    {% set disabled = c.available_items == 0 or not c.has_standard_price %}
-                    <tr
-                      class="align-top"
-                      data-item-row
-                      data-client-list-item
-                      data-client-list-group="rows"
-                      data-search-text="{{ (
-                        c.display_name ~ ' ' ~
-                        ('tent ' if c.is_tent else '') ~
-                        ('furnishing ' if c.is_furnishing else '') ~
-                        (c.furnishing_kind or '') ~ ' ' ~
-                        (c.rental_period_label or '') ~ ' ' ~
-                        (c.notes or '')
-                      )|lower }}"
-                    >
-                      <td class="p-3">
-                        <div class="font-medium text-slate-900">{{ c.display_name }}</div>
-                        <div class="mt-1 text-xs text-slate-500">Kategori #{{ c.id }}</div>
-                      </td>
-
-                      <td class="p-3">
-                        {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.rental_period_label }}</div>
-                          <div class="mt-1 text-xs text-slate-500">
-                            {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                              1 dag
-                            {% else %}
-                              {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
-                            {% endif %}
-                          </div>
-                        {% else %}
-                          <span class="text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                        {% else %}
-                          <span class="text-slate-400">Ej tillgänglig</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.available_items > 0 %}
-                          <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                            <span class="font-medium text-slate-900" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
-                            <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
-                              <button
-                                type="button"
-                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-                                data-shared-stock-toggle
-                                aria-expanded="false"
-                                aria-label="Information om delat lager"
-                              >
-                                i
-                              </button>
-                              <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                                <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
-                              </div>
-                            </div>
-                          </div>
-                        {% else %}
-                          <span class="font-medium text-rose-600">0</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3 text-xs text-slate-600">
-                        {% if c.is_tent %}
-                          <div>Kapacitet: {{ c.capacity }}</div>
-                          <div class="mt-1">Säsong: {{ c.season_rating }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                        {% else %}
-                          <div>{{ c.furnishing_kind }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                          {% if c.weight_kg %}<div class="mt-1">Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        <input
-                          type="number"
-                          min="0"
-                          max="{{ c.available_items }}"
-                          step="1"
-                          value="0"
-                          name="qty_{{ c.id }}"
-                          inputmode="numeric"
-                          {% if disabled %}disabled{% endif %}
-                          data-booking-qty
-                          data-category-id="{{ c.id }}"
-                          data-category-name="{{ c.display_name }}"
-                          data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
-                          data-setup-fee="{{ c.setup_service_fee or 0 }}"
-                          data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
-                          data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
-                          data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                          class="w-24 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-                        >
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         {% endif %}
 
-        <div
-          class="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-          data-local-pager
-        >
-          <div class="text-sm text-slate-600">
-            <span data-pager-status>Visar 0 av 0</span>
-          </div>
+        <div class="sk-pager" data-local-pager>
+          <p class="sk-pager__status"><span data-pager-status>Visar 0 av 0</span></p>
 
-          <div class="grid gap-3 min-[420px]:grid-cols-[auto_1fr] min-[420px]:items-center lg:flex lg:items-center lg:justify-end">
-            <div class="flex items-center gap-2">
-              <label class="text-sm font-medium text-slate-700" for="items-per-page">Rader</label>
-              <select
-                id="items-per-page"
-                data-pager-per-page
-                class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-pink-400 focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
+          <div class="sk-pager__controls">
+            <div class="sk-pager__per">
+              <label for="items-per-page">Per sida</label>
+              <select id="items-per-page" data-pager-per-page class="sk-input">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="20">20</option>
@@ -310,302 +264,286 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 items-center gap-2 min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[420px]:justify-self-end sm:min-w-[18rem]">
-              <button
-                type="button"
-                data-pager-prev
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Föregående
-              </button>
-
-              <span
-                data-pager-page
-                class="hidden min-w-0 text-center text-sm font-medium text-slate-700 min-[420px]:block"
-              >
-                Sida 1 av 1
-              </span>
-
-              <button
-                type="button"
-                data-pager-next
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Nästa
-              </button>
+            <div class="sk-pager__nav">
+              <button type="button" data-pager-prev class="sk-pager__btn">Föregående</button>
+              <span data-pager-page class="sk-pager__page">Sida 1 av 1</span>
+              <button type="button" data-pager-next class="sk-pager__btn">Nästa</button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr_0.8fr] xl:items-start">
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 3</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Tjänster</h2>
+    <section class="sk-step" id="steg-3" aria-labelledby="steg-3-title">
+      <header class="sk-step__bar sk-scallop sk-bg-orange">
+        <span class="sk-step__label">Steg 3</span>
+        <h2 class="sk-step__title" id="steg-3-title">Leverans och montering</h2>
+      </header>
+
+      <div class="sk-step__body">
+        <label class="sk-option" for="include_delivery">
+          <input
+            type="checkbox"
+            name="include_delivery"
+            id="include_delivery"
+            class="sk-check"
+          >
+          <span class="min-w-0">
+            <span class="sk-option__title">Leverans</span>
+            <span class="sk-option__text">Vi kör ut till adressen i steg 4. Avgiften räknas ut efter körsträckan.</span>
+            <span class="sk-option__text sk-tiny">Adressen kontrolleras och rutten räknas ut med Geoapify.</span>
+          </span>
+        </label>
+
+        <label class="sk-option" for="include_setup_service">
+          <input
+            type="checkbox"
+            name="include_setup_service"
+            id="include_setup_service"
+            class="sk-check"
+          >
+          <span class="min-w-0">
+            <span class="sk-option__title">Montering</span>
+            <span class="sk-option__text" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
+          </span>
+        </label>
+
+        <div class="mt-6">
+          <label class="sk-label" for="booking_note">Meddelande till oss <span class="sk-muted font-medium">(valfritt)</span></label>
+          <textarea
+            id="booking_note"
+            name="booking_note"
+            rows="4"
+            placeholder="Till exempel tider, portkod eller var tältet ska stå"
+            class="sk-input"
+          ></textarea>
         </div>
+      </div>
+    </section>
 
-        <div class="space-y-5 px-6 py-6">
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
-            <input
-              type="checkbox"
-              name="include_delivery"
-              id="include_delivery"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-            >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera leverans</span>
-              <span class="mt-1 block">Vi validerar adressen och räknar ut avgiften utifrån körsträckan.</span>
-              <span class="mt-1 block text-xs text-slate-500">Adressvalidering och ruttberäkning använder Geoapify.</span>
-            </span>
-          </label>
+    <section class="sk-step" id="steg-4" aria-labelledby="steg-4-title">
+      <header class="sk-step__bar sk-scallop sk-bg-leaf-deep">
+        <span class="sk-step__label">Steg 4</span>
+        <h2 class="sk-step__title" id="steg-4-title">
+          {% if role == "customer" and customer_profile %}Ditt konto{% else %}Dina uppgifter{% endif %}
+        </h2>
+      </header>
 
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
-            <input
-              type="checkbox"
-              name="include_setup_service"
-              id="include_setup_service"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-            >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera montering</span>
-              <span class="mt-1 block" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
-            </span>
-          </label>
-
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="booking_note">Bokningsanteckning</label>
-            <textarea
-              id="booking_note"
-              name="booking_note"
-              rows="4"
-              placeholder="Åtkomstinfo, tider, leveransinstruktioner..."
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-            ></textarea>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 4</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">
-            {% if role == "customer" and customer_profile %}Ditt konto{% else %}Skapa konto{% endif %}
-          </h2>
-        </div>
-
-        <div class="space-y-4 px-6 py-6">
+      <div class="sk-step__body">
+        <div class="sk-fields">
           {% if role == "customer" and customer_profile %}
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-              Bokar som <span class="font-medium">{{ customer_profile.full_name }}</span>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.
-            </div>
+            <p class="sk-note sk-fields__full">Bokar som <strong>{{ customer_profile.full_name }}</strong>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.</p>
 
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
+            <div class="sk-fields__full">
+              <label class="sk-label" for="phone">Telefon</label>
               <input
                 id="phone"
                 name="phone"
                 value="{{ customer_profile.phone or '' }}"
                 autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
           {% else %}
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="full_name">Fullständigt namn</label>
+            <p class="sk-muted sk-small sk-fields__full">Vi skapar ett konto åt dig med bokningen, så att du kan följa den här på sidan.</p>
+
+            <div class="sk-fields__full">
+              <label class="sk-label" for="full_name">Namn</label>
               <input
                 id="full_name"
                 name="full_name"
                 required
                 autocomplete="name"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
 
             <div>
-              <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
+              <label class="sk-label" for="email">E-post</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
                 autocomplete="email"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
 
             <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
+              <label class="sk-label" for="phone">Telefon</label>
               <input
                 id="phone"
                 name="phone"
                 autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
           {% endif %}
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="address">Adress för bokningen (gata)</label>
+          <div class="sk-fields__full">
+            <label class="sk-label" for="address">Gatuadress där tältet ska stå</label>
             <input
               id="address"
               name="address"
               type="text"
               value="{{ customer_profile.address if role == 'customer' and customer_profile and customer_profile.address else '' }}"
-              placeholder="T&auml;lt destination"
               autocomplete="street-address"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              class="sk-input"
             >
           </div>
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="postal_city">Postort för bokningen</label>
+          <div class="sk-fields__full">
+            <label class="sk-label" for="postal_city">Postnummer och ort</label>
             <input
               id="postal_city"
               name="postal_city"
               type="text"
               value="{{ customer_profile.postal_city if role == 'customer' and customer_profile and customer_profile.postal_city else '' }}"
-              placeholder="Postort f&ouml;r T&auml;lt destination"
               autocomplete="address-level2"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              class="sk-input"
             >
           </div>
 
           <p
             id="delivery-address-error"
-            class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            class="hidden sk-alert sk-fields__full"
+            role="alert"
           ></p>
 
           {% if not (role == "customer" and customer_profile) %}
             <div>
-              <label class="text-sm font-medium text-slate-700" for="password">Lösenord</label>
+              <label class="sk-label" for="password">Välj lösenord</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
                 autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
             <div>
-              <label class="text-sm font-medium text-slate-700" for="password_confirm">Upprepa l&ouml;senord</label>
+              <label class="sk-label" for="password_confirm">Upprepa lösenordet</label>
               <input
                 id="password_confirm"
                 name="password_confirm"
                 type="password"
                 required
                 autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                class="sk-input"
               >
             </div>
           {% endif %}
         </div>
-      </section>
+      </div>
+    </section>
+    </div>
 
-      <section class="rounded-[2rem] border bg-green-50/50 text-slate-900 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-        <div class="border-b px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-green-400">Steg 5</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Sammanfattning</h2>
-        </div>
+    <aside class="sk-flow__aside">
+    <section class="sk-step" id="steg-5" aria-labelledby="steg-5-title">
+      <header class="sk-step__bar sk-scallop sk-bg-magenta-deep">
+        <span class="sk-step__label">Steg 5</span>
+        <h2 class="sk-step__title" id="steg-5-title">Sammanfattning</h2>
+      </header>
 
-        <div class="space-y-3 px-6 py-6 text-sm">
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Artiklar</span>
-            <span id="summary-items" class="font-semibold text-slate-950">0 valda</span>
+      <div class="sk-step__body">
+        <p class="sk-summary__dates">{{ start_date|swedish_date_range(end_date) }}</p>
+
+        <div class="sk-summary__rows">
+          <div class="sk-summary__row">
+            <span>Artiklar</span>
+            <span id="summary-items">0 valda</span>
           </div>
 
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Hyra</span>
-            <span id="summary-rental" class="font-semibold text-slate-950">0 kr</span>
+          <div class="sk-summary__row">
+            <span>Hyra</span>
+            <span id="summary-rental">0 kr</span>
           </div>
 
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Montering</span>
-            <span id="summary-setup" class="font-semibold text-slate-950">Inte tillvalt</span>
+          <div class="sk-summary__row">
+            <span>Montering</span>
+            <span id="summary-setup">Inte tillvalt</span>
           </div>
 
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Leverans</span>
-            <span id="summary-delivery" class="font-semibold text-slate-950">Inte tillvalt</span>
+          <div class="sk-summary__row">
+            <span>Leverans</span>
+            <span id="summary-delivery">Inte tillvalt</span>
           </div>
 
           {% if customer_furnishing_without_tent_surcharge_enabled %}
             <div id="summary-furnishing-surcharge-row" class="hidden">
-              <div class="flex items-center justify-between gap-4">
-                <span class="text-slate-500">Inredning utan tält (+25%)</span>
-                <span id="summary-furnishing-surcharge" class="font-semibold text-slate-950">0 kr</span>
+              <div class="sk-summary__row">
+                <span>Möbler utan tält (+25&nbsp;%)</span>
+                <span id="summary-furnishing-surcharge">0 kr</span>
               </div>
-              <div id="summary-furnishing-surcharge-note" class="mt-2 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
-              </div>
+              <p id="summary-furnishing-surcharge-note" class="hidden sk-note sk-note--orange mt-3">
+                Bokningen innehåller inget tält, därför läggs 25&nbsp;% på möblerna.
+              </p>
             </div>
           {% endif %}
 
           {% if customer_prices_include_vat %}
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-slate-500">Moms (25%)</span>
-              <span id="summary-vat" class="font-semibold text-slate-950">0 kr</span>
+            <div class="sk-summary__row">
+              <span>Moms (25&nbsp;%)</span>
+              <span id="summary-vat">0 kr</span>
             </div>
           {% endif %}
+        </div>
 
-          <div class="border-t border-pink-100 pt-3">
-            {% if customer_prices_include_vat %}
-              <div class="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span class="text-slate-500">Pris exkl. moms</span>
-                <span id="summary-subtotal" class="font-medium text-slate-900">0 kr</span>
-              </div>
-            {% endif %}
-            <div class="flex items-center justify-between gap-4 text-base font-semibold">
-              <span>{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Total{% endif %}</span>
-              <span id="summary-total" class="text-rose-600">0 kr</span>
-            </div>
+        {% if customer_prices_include_vat %}
+          <div class="sk-summary__row sk-summary__row--plain">
+            <span>Pris exkl. moms</span>
+            <span id="summary-subtotal">0 kr</span>
           </div>
+        {% endif %}
+        <div class="sk-summary__total">
+          <span class="sk-summary__total-label">{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Totalt{% endif %}</span>
+          <span id="summary-total" class="sk-summary__total-value sk-num">0 kr</span>
+        </div>
 
-          <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
-            <div class="text-sm font-semibold text-slate-900">Hyresvillkor</div>
-            <p class="mt-1 text-xs leading-5 text-slate-600">
-              L&#228;s hyresvillkoren innan du skickar bokningen:
+        <div class="sk-terms">
+          <label class="flex items-start gap-3" for="accept_rental_terms">
+            <input
+              type="checkbox"
+              id="accept_rental_terms"
+              name="accept_rental_terms"
+              value="1"
+              required
+              class="sk-check"
+            >
+            <span class="sk-small">
+              Jag har läst och godkänner
               <a
                 href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="font-semibold text-rose-600 underline underline-offset-4"
-              >
-                &#214;ppna PDF
-              </a>
-            </p>
-
-            <label class="mt-3 flex items-start gap-3 text-sm text-slate-700" for="accept_rental_terms">
-              <input
-                type="checkbox"
-                id="accept_rental_terms"
-                name="accept_rental_terms"
-                value="1"
-                required
-                class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-              >
-              <span>Jag har l&#228;st och godk&#228;nner hyresvillkoren.</span>
-            </label>
-          </div>
-
-          <p id="form-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></p>
-
-          <button
-            type="submit"
-            class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-pink-300 disabled:hover:bg-pink-300"
-          >
-            {% if role == "customer" and customer_profile %}Skicka bokning{% else %}Skicka bokning och skapa konto{% endif %}
-          </button>
-
-          <p class="text-xs text-slate-500">
-            Bokningen skapas som väntande. Lagret reserveras tillfälligt tills personalen bekräftar den.
-          </p>
+                class="sk-link"
+              >hyresvillkoren (PDF)</a>.
+            </span>
+          </label>
         </div>
-      </section>
-    </div>
+
+        <p id="form-error" class="hidden sk-alert mt-4" role="alert"></p>
+
+        <button type="submit" class="sk-btn sk-btn--primary sk-btn--block sk-submit mt-5">{% if role == "customer" and customer_profile %}Skicka bokningen{% else %}Boka och skapa konto{% endif %}</button>
+
+        <p class="sk-tiny sk-muted mt-4">
+          Bokningen skapas som väntande. Det du valt reserveras tillfälligt tills vi har bekräftat den.
+        </p>
+      </div>
+    </section>
+    </aside>
   </form>
+  </div>
+
+  <a href="#steg-5" class="sk-mobiletotal" data-sk-mobiletotal>
+    <span class="sk-mobiletotal__sum">
+      <strong class="sk-num" data-sk-total-mirror>0 kr</strong>
+      <span data-sk-items-mirror>0 valda</span>
+    </span>
+    <span class="sk-mobiletotal__cta">Till sammanfattningen</span>
+  </a>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -1095,152 +1033,221 @@
     });
   </script>
   {% else %}
-    <section class="mt-6 rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Sortiment</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Tillgängliga artiklar och priser</h2>
-            <p class="mt-2 max-w-2xl text-sm text-slate-600">
-              Välj datum ovan för exakt tillgänglighet och bokning.
-            </p>
-          </div>
+    {% set sk_tents = categories|selectattr('is_tent')|list %}
+    {% set sk_others = categories|rejectattr('is_tent')|list %}
+    {% set sk_capacities = sk_tents|map(attribute='capacity')|select|list %}
+    {% set sk_setup_fees = sk_tents|map(attribute='setup_service_fee')|select|list %}
+    {% set sk_canopy_colours = ['magenta', 'orange', 'leaf', 'teal', 'sun', 'coral'] %}
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier visas
-          </div>
-        </div>
+    <section class="sk-section" aria-labelledby="sa-funkar-det">
+      <div class="sk-container">
+        <h2 class="sk-h2" id="sa-funkar-det"><span class="sk-wipe sk-wipe--sun">Så funkar det</span></h2>
+        <ol class="sk-bunting" role="list">
+          <li class="sk-bunting__item">
+            <span class="sk-bunting__flag sk-bg-sun" aria-hidden="true">1</span>
+            <div>
+              <h3 class="sk-bunting__title">Välj datum</h3>
+              <p class="mt-2 sk-muted">Tält hyrs 3 till 7 dagar. Du ser direkt vad som är ledigt de dagarna.</p>
+            </div>
+          </li>
+          <li class="sk-bunting__item">
+            <span class="sk-bunting__flag sk-bg-teal" aria-hidden="true">2</span>
+            <div>
+              <h3 class="sk-bunting__title">Välj tält och möbler</h3>
+              <p class="mt-2 sk-muted">Tält efter antal gäster, sedan bord, stolar och ljus. Priset räknas ut medan du väljer.</p>
+            </div>
+          </li>
+          <li class="sk-bunting__item">
+            <span class="sk-bunting__flag sk-bg-orange" aria-hidden="true">3</span>
+            <div>
+              <h3 class="sk-bunting__title">Leverans och montering</h3>
+              <p class="mt-2 sk-muted">Lägg till om ni vill. Leveransen prissätts efter körsträckan till er adress.</p>
+            </div>
+          </li>
+          <li class="sk-bunting__item">
+            <span class="sk-bunting__flag sk-bg-magenta" aria-hidden="true">4</span>
+            <div>
+              <h3 class="sk-bunting__title">Vi bekräftar</h3>
+              <p class="mt-2 sk-muted">Det du valt reserveras direkt. Vi går igenom bokningen och bekräftar den.</p>
+            </div>
+          </li>
+        </ol>
       </div>
+    </section>
 
-      <div class="px-6 py-6 md:px-8">
-        {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier finns att visa just nu.</i>
+    {% if categories|length == 0 %}
+      <section class="sk-section sk-section--tight">
+        <div class="sk-container">
+          <p class="sk-lead">Sortimentet kunde inte visas just nu. Ring <a class="sk-link" href="tel:0730813710">073-081 37 10</a> så hjälper vi dig.</p>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if sk_tents %}
+      <section class="sk-section sk-section--flush-top" aria-labelledby="talten">
+        <div class="sk-container">
+          <div class="sk-sectionhead">
+            <h2 class="sk-h2" id="talten">
+              <span class="sk-wipe sk-wipe--teal">{% if sk_capacities %}Tält för {{ sk_capacities|min }} till {{ sk_capacities|max }} gäster{% else %}Tälten{% endif %}</span>
+            </h2>
+            <p class="sk-lead sk-sectionhead__lead">Priset gäller hela hyresperioden. Montering kan läggas till när du bokar.</p>
           </div>
-        {% else %}
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {% for c in categories %}
-              {% set furnishing_theme = c.is_furnishing %}
-              <article class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]">
-                <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                  <div>
-                    <h3 class="font-semibold text-slate-900">{{ c.display_name }}</h3>
-                    <div class="mt-2 hidden flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
-                  </div>
 
-                  <span class="inline-flex rounded-full border px-3 py-1 text-xs font-medium {% if furnishing_theme %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-pink-200 bg-pink-50 text-rose-600{% endif %}">
-                    {% if c.is_tent %}
-                      Tält
-                    {% elif c.is_furnishing %}
-                      Inredning
-                    {% else %}
-                      Kategori
-                    {% endif %}
-                  </span>
-                </div>
-
-                <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-4">
-                  {% if c.all_period_prices %}
-                    <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">Priser</div>
-                    {% set cheapest_price_row = (c.all_period_prices|sort(attribute='price')|first) %}
-                    <div class="mt-3">
-                      <div class="text-lg font-semibold text-slate-950">Från {{ cheapest_price_row.price }} kr</div>
-                      <div class="mt-1 text-xs text-slate-500">
-                        {{ cheapest_price_row.label }}
-                        {% if cheapest_price_row.min_days == 1 and cheapest_price_row.max_days == 1 %}
-                          • 1 dag
-                        {% else %}
-                          • {{ cheapest_price_row.min_days }}-{{ cheapest_price_row.max_days }} dagar
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="mt-3" data-price-popover-root>
-                      {% set price_option_count = c.all_period_prices|length + (1 if c.setup_service_fee else 0) %}
-                      <button
-                        type="button"
-                        data-price-popover-toggle
-                        aria-expanded="false"
-                        class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <span>Visa alla priser</span>
-                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          {{ price_option_count }} st
-                        </span>
-                      </button>
-
-                      <div
-                        class="fixed z-[80] hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
-                        data-price-popover-panel
-                      >
-                        <div class="mb-3 flex items-center justify-between gap-3">
-                          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                            Priser
-                          </div>
-                          <button
-                            type="button"
-                            data-price-popover-close
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 pb-0.5 text-sm font-semibold leading-none text-slate-600 transition hover:bg-slate-100"
-                            aria-label="Stäng prislista"
-                          >
-                            x
-                          </button>
-                        </div>
-
-                        <div class="space-y-2">
-                        {% for price_row in c.all_period_prices %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">{{ price_row.label }}</div>
-                              <div class="mt-1 text-xs text-slate-500">
-                                {% if price_row.min_days == 1 and price_row.max_days == 1 %}
-                                  1 dag
-                                {% else %}
-                                  {{ price_row.min_days }}-{{ price_row.max_days }} dagar
-                                {% endif %}
-                              </div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ price_row.price }} kr</div>
-                          </div>
-                        {% endfor %}
-                        {% if c.setup_service_fee %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">Montering</div>
-                              <div class="mt-1 text-xs text-slate-500">Tillkommer vid val av montering.</div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ c.setup_service_fee }} kr</div>
-                          </div>
-                        {% endif %}
-                      </div>
-                    </div>
-                  {% elif c.has_standard_price %}
-                    <div class="text-lg font-semibold text-slate-950">{{ c.quoted_period_price }} kr</div>
-                    <div class="mt-1 text-xs text-slate-500">
-                      {{ c.rental_period_label }}
-                      {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                        • 1 dag
-                      {% else %}
-                        • {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
-                      {% endif %}
-                    </div>
+          <div class="sk-tents">
+            {% for c in sk_tents %}
+              {% set dims = c|tent_dimensions %}
+              {% set area = c.floor_area_m2 or ((dims.width * dims.length) if dims else none) %}
+              {% set cheapest = (c.all_period_prices|sort(attribute='price')|first) if c.all_period_prices else none %}
+              <article class="sk-tent">
+                <div class="sk-canopy sk-scallop sk-bg-{{ sk_canopy_colours[loop.index0 % 6] }}">
+                  {% if dims %}
+                    <h3 class="sk-canopy__dims"><span class="sr-only">Tält </span>{{ c.display_name.replace('Tält', '').replace(' m', '').strip() }}<small>&nbsp;m</small></h3>
                   {% else %}
-                    <div class="text-sm font-semibold text-amber-700">Standardpris saknas</div>
-                    <div class="mt-1 text-xs text-slate-500">Kontakta oss för prisuppgift.</div>
+                    <h3 class="sk-canopy__dims sk-canopy__dims--name">{{ c.display_name }}</h3>
                   {% endif %}
                 </div>
-
-                {% if c.is_tent %}
-                  <div class="mt-4 space-y-1 text-sm text-slate-600">
-                    <div>Kapacitet: {{ c.capacity }}</div>
-                    <div>Säsong: {{ c.season_rating }}</div>
+                {% if c.capacity %}<p class="sk-tent__guests">Upp till {{ c.capacity }} gäster</p>{% endif %}
+                {% if area %}<p class="sk-tent__facts">{{ '%g'|format(area|float) }}&nbsp;m² golvyta</p>{% endif %}
+                <p class="sk-tent__price">
+                  {% if cheapest %}
+                    Från <strong class="sk-num">{{ cheapest.price|sek }}</strong> <span class="sk-muted whitespace-nowrap">för {{ sk_period(cheapest.min_days, cheapest.max_days) }}</span>
+                  {% elif c.has_standard_price %}
+                    <strong class="sk-num">{{ c.quoted_period_price|sek }}</strong> <span class="sk-muted whitespace-nowrap">för {{ sk_period(c.rental_period_min_days, c.rental_period_max_days) }}</span>
+                  {% else %}
+                    <span class="sk-muted">Ring oss för pris.</span>
+                  {% endif %}
+                </p>
+                {% if c.all_period_prices %}
+                  <div class="mt-auto" data-price-popover-root>
+                    <button type="button" class="sk-pricetoggle" data-price-popover-toggle aria-expanded="false">
+                      <span>Visa alla priser</span>
+                      <span class="sk-chev" aria-hidden="true"></span>
+                    </button>
+                    {{ sk_price_panel(c) }}
                   </div>
                 {% endif %}
               </article>
             {% endfor %}
           </div>
-        {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if sk_others %}
+      <section class="sk-section sk-section--flush-top" aria-labelledby="mobler-och-ljus">
+        <div class="sk-container sk-split">
+          <div class="sk-split__intro">
+            <h2 class="sk-h2" id="mobler-och-ljus"><span class="sk-wipe sk-wipe--orange">Möbler och ljus</span></h2>
+            <p class="sk-lead mt-5">Bord, stolar, bänkset och ljusslingor. Tryck på en rad för alla priser.</p>
+            {% if customer_furnishing_without_tent_surcharge_enabled %}
+              <p class="sk-note sk-note--orange mt-5">Hyr ni möbler utan tält tillkommer 25&nbsp;% på möblerna.</p>
+            {% endif %}
+          </div>
+
+          <ul class="sk-menu sk-split__list" role="list">
+            {% for c in sk_others %}
+              {% set cheapest = (c.all_period_prices|sort(attribute='price')|first) if c.all_period_prices else none %}
+              <li class="sk-menu__item">
+                {% if c.all_period_prices %}
+                  <div data-price-popover-root>
+                    <button type="button" class="sk-menu__toggle" data-price-popover-toggle aria-expanded="false">
+                      <span class="min-w-0">
+                        <span class="sk-menu__name">{{ c.display_name }}</span>
+                        {% if c.notes %}<span class="sk-menu__note">{{ c.notes }}</span>{% endif %}
+                      </span>
+                      <span class="sk-menu__price">
+                        Från <strong class="sk-num">{{ cheapest.price|sek }}</strong>
+                        <span class="sk-menu__period">{{ sk_period(cheapest.min_days, cheapest.max_days) }}</span>
+                      </span>
+                      <span class="sk-chev" aria-hidden="true"></span>
+                    </button>
+                    {{ sk_price_panel(c) }}
+                  </div>
+                {% else %}
+                  <div class="sk-menu__toggle sk-menu__toggle--static">
+                    <span class="min-w-0">
+                      <span class="sk-menu__name">{{ c.display_name }}</span>
+                      {% if c.notes %}<span class="sk-menu__note">{{ c.notes }}</span>{% endif %}
+                    </span>
+                    <span class="sk-menu__price">
+                      {% if c.has_standard_price %}<strong class="sk-num">{{ c.quoted_period_price|sek }}</strong>{% else %}Ring oss för pris{% endif %}
+                    </span>
+                  </div>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+
+          <figure class="sk-photo sk-split__photo">
+            <img
+              src="{{ url_for('static', filename='img/solsken/colourful-tables-under-tent.jpg') }}"
+              width="1200"
+              height="800"
+              alt="Runda bord med orange dukar och trästolar under ett vitt tält med ljusslingor"
+              loading="lazy"
+              decoding="async"
+            >
+          </figure>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="sk-band sk-scallop sk-bg-orange" aria-labelledby="leverans-och-montering">
+      <div class="sk-container sk-band__grid">
+        <div>
+          <h2 class="sk-h2" id="leverans-och-montering">Leverans och montering</h2>
+          <p class="sk-lead mt-5">Välj leverans när du bokar så kör vi ut. Med montering sätter vi också upp och tar ner tältet.</p>
+          <dl class="sk-facts">
+            <div>
+              <dt>Leverans</dt>
+              <dd>Lägg till när du bokar. Avgiften räknas ut efter körsträckan till er adress.</dd>
+            </div>
+            <div>
+              <dt>Montering{% if sk_setup_fees %} från {{ (sk_setup_fees|min)|sek }}{% endif %}</dt>
+              <dd>Vi sätter upp och tar ner tältet. Priset beror på tältet och montering kräver leverans.</dd>
+            </div>
+            <div>
+              <dt>Möblering</dt>
+              <dd>Väljer ni montering hjälper vi även till att ställa i ordning möblerna.</dd>
+            </div>
+            <div>
+              <dt>Var</dt>
+              <dd>Karlshamn och övriga Blekinge.</dd>
+            </div>
+          </dl>
+        </div>
+        <figure class="sk-photo sk-band__photo">
+          <img
+            src="{{ url_for('static', filename='img/solsken/party-tent-garden.jpg') }}"
+            width="1200"
+            height="800"
+            alt="Vitt partytält med fönster, uppsatt och förankrat på en gräsmatta intill skogen"
+            loading="lazy"
+            decoding="async"
+          >
+        </figure>
+      </div>
+    </section>
+
+    <section class="sk-section" aria-labelledby="fragor">
+      <div class="sk-container sk-split sk-split--even">
+        <div>
+          <h2 class="sk-h2" id="fragor"><span class="sk-wipe sk-wipe--sun">Vanliga frågor</span></h2>
+          <ul class="sk-faqlinks" role="list">
+            <li><a href="{{ url_for('routes.faq') }}#fraga-2"><span class="sk-qa__mark" aria-hidden="true"></span>Hur långt i förväg måste jag boka?</a></li>
+            <li><a href="{{ url_for('routes.faq') }}#fraga-3"><span class="sk-qa__mark" aria-hidden="true"></span>Kan jag få leverans och montering?</a></li>
+            <li><a href="{{ url_for('routes.faq') }}#fraga-5"><span class="sk-qa__mark" aria-hidden="true"></span>Vad händer efter att jag skickat in en bokning?</a></li>
+          </ul>
+          <a class="sk-btn sk-btn--outline mt-8" href="{{ url_for('routes.faq') }}">Alla frågor och svar</a>
+        </div>
+        <div>
+          <h2 class="sk-h3">Hellre prata med någon?</h2>
+          <p class="sk-muted mt-2">Ring eller mejla, så svarar vi på frågor om tält, datum och större fester.</p>
+          <div class="sk-contact mt-6">
+            <a href="tel:0730813710"><span class="sk-contact__label">Telefon</span><span class="sk-contact__value">073-081 37 10</span></a>
+            <a href="mailto:kadaparty@kadaparty.se"><span class="sk-contact__label">E-post</span><span class="sk-contact__value">kadaparty@kadaparty.se</span></a>
+          </div>
+        </div>
       </div>
     </section>
     <script>
