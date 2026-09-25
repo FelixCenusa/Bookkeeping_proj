@@ -12,7 +12,7 @@
     <div class="pr-progress" data-pr-progress>
       <div class="pr-wrap pr-progress__bar">
         <p class="pr-progress__dates">
-          <span class="pr-progress__k">Era datum</span>
+          <span class="pr-progress__k">Dina datum</span>
           <strong class="pr-num">{{ start_date|swedish_date_range(end_date) }}</strong>
           <button type="button" class="pr-progress__edit" data-pr-edit-dates>Ändra</button>
         </p>
@@ -170,7 +170,7 @@
                 <tr>
                   <th class="pr-th pr-th--guests" data-sort-type="number">Max gäster</th>
                   <th class="pr-th">Tält och tillbehör</th>
-                  <th class="pr-th">Hyrperiod</th>
+                  <th class="pr-th">Hyresperiod</th>
                   <th class="pr-th pr-th--num" data-sort-type="number">Pris</th>
                   <th class="pr-th pr-th--num" data-sort-type="number">Lediga</th>
                   <th class="pr-th pr-th--qty" data-sort-type="number">Antal</th>
@@ -319,7 +319,7 @@
           <span class="pr-step__no pr-num" aria-hidden="true">3</span>
           <div>
             <h2 class="pr-h2" id="steg-3-title">Leverans och montering</h2>
-            <p class="pr-step__lede">Båda är tillval. Utan leverans hämtar ni själva.</p>
+            <p class="pr-step__lede">Båda är tillval. Utan leverans hämtar du själv.</p>
           </div>
         </header>
 
@@ -427,7 +427,7 @@
               name="address"
               type="text"
               value="{{ customer_profile.address if role == 'customer' and customer_profile and customer_profile.address else '' }}"
-              placeholder="Till exempel Östersjövägen 45"
+              placeholder="Till exempel Storgatan 1"
               autocomplete="street-address"
               class="pr-field"
             >
@@ -510,18 +510,18 @@
           {% if customer_furnishing_without_tent_surcharge_enabled %}
             <div id="summary-furnishing-surcharge-row" class="hidden">
               <div class="pr-receipt__row flex">
-                <span>Inredning utan tält (+25%)</span>
+                <span>Inredning utan tält (+25&nbsp;%)</span>
                 <span id="summary-furnishing-surcharge" class="pr-num">0 kr</span>
               </div>
               <p id="summary-furnishing-surcharge-note" class="hidden pr-alert pr-alert--wait">
-                Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
+                Bokningen innehåller inget tält, därför läggs ett tillägg på 25&nbsp;% på all inredning.
               </p>
             </div>
           {% endif %}
 
           {% if customer_prices_include_vat %}
             <div class="pr-receipt__row flex">
-              <span>Moms (25%)</span>
+              <span>Moms (25&nbsp;%)</span>
               <span id="summary-vat" class="pr-num">0 kr</span>
             </div>
           {% endif %}
@@ -567,7 +567,7 @@
         </button>
 
         <p class="pr-summary__note">
-          Bokningen skapas som väntande. Lagret reserveras tillfälligt tills vi har bekräftat den.
+          Bokningen skapas som väntande. Vi håller det du valt en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.
         </p>
       </div>
     </aside>
@@ -1108,7 +1108,7 @@
           <li class="pr-how__step">
             <span class="pr-how__no pr-num" aria-hidden="true">4</span>
             <h3 class="pr-h3">Vi bekräftar</h3>
-            <p>Bokningen är väntande tills vi har bekräftat den. Under tiden reserveras lagret.</p>
+            <p>Vi håller det du valt en begränsad tid medan vi går igenom bokningen, och bekräftar eller hör av oss.</p>
           </li>
         </ol>
       </div>
@@ -1201,7 +1201,7 @@
           <h2 class="pr-h2" id="service-title">Leverans och montering</h2>
           <p>Vi kör ut tält och tillbehör i Karlshamn och övriga Blekinge. Leveranspriset räknas på körsträckan när du skriver in adressen i bokningen, så du ser det innan du skickar.</p>
           <p>Med leverans kan du också välja montering och nedmontering av tältet{% if ns_land.setup_lo is not none %}, från <span class="pr-num">{{ ns_land.setup_lo|sek }}</span> beroende på storlek{% endif %}. Väljer du montering hjälper vi även till med möbleringen.</p>
-          <p class="pr-service__pickup">Utan leverans hämtar ni själva.</p>
+          <p class="pr-service__pickup">Utan leverans hämtar du själv.</p>
         </div>
       </div>
     </section>

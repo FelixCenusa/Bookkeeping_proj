@@ -8,7 +8,7 @@
 
     <nav class="pr-nav__links" aria-label="Huvudmeny">
       <a href="{{ url_for('routes.home') }}"{% if _path == '/' %} aria-current="page"{% endif %}>Boka</a>
-      <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>FAQ</a>
+      <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>Vanliga frågor</a>
       <a href="{{ url_for('routes.about') }}"{% if _path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
     </nav>
 
@@ -32,7 +32,7 @@
       <div class="pr-nav__panel">
         <nav aria-label="Meny">
           <a href="{{ url_for('routes.home') }}"{% if _path == '/' %} aria-current="page"{% endif %}>Boka</a>
-          <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>FAQ</a>
+          <a href="{{ url_for('routes.faq') }}"{% if _path == '/faq' %} aria-current="page"{% endif %}>Vanliga frågor</a>
           <a href="{{ url_for('routes.about') }}"{% if _path == '/about' %} aria-current="page"{% endif %}>Om oss</a>
           {% if _logged_in %}
             <a href="{{ url_for('routes.customers') }}"{% if _path.startswith('/customers') %} aria-current="page"{% endif %}>Min profil</a>
