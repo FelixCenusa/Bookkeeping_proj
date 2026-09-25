@@ -1,59 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="mx-auto max-w-5xl">
-  <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-    <div class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_50%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-      <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="absolute right-6 top-6 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
-      <div class="relative px-6 py-8 md:px-8">
-        <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-          Kundkonto
-        </div>
-        <h1 class="mt-5 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Skapa konto</h1>
-        <p class="mt-3 max-w-xl text-sm leading-6 text-slate-700 md:text-base">
-          Registrera dig som kund och skapa profilen som dina bokningar använder automatiskt.
-        </p>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-2xl border border-emerald-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Snabb bokning</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Dina kontaktuppgifter kan återanvändas vid framtida bokningar.</div>
-          </div>
-          <div class="rounded-2xl border border-pink-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Tydlig översikt</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Se vad du har bokat och vad som fortfarande väntar på bekräftelse.</div>
-          </div>
-        </div>
-      </div>
+<section class="sk-auth">
+  <div class="sk-container sk-auth__grid">
+    <div class="sk-auth__head">
+      <h1 class="sk-h1">Skapa konto</h1>
+      <p class="sk-lead mt-5">Med ett konto följer du dina bokningar och slipper fylla i dina uppgifter varje gång.</p>
     </div>
 
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8">
-      <form method="post" class="space-y-4">
+    <div class="sk-auth__panel">
+      <form method="post" class="sk-authform">
         <div>
-          <label class="text-sm font-medium text-slate-700" for="full_name">Fullständigt namn</label>
-          <input id="full_name" name="full_name" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+          <label class="sk-label" for="full_name">Namn</label>
+          <input id="full_name" name="full_name" required autocomplete="name" class="sk-input">
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
-          <input id="email" name="email" type="email" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+          <label class="sk-label" for="email">E-post</label>
+          <input id="email" name="email" type="email" required autocomplete="email" class="sk-input">
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700" for="phone">Telefon (valfritt)</label>
-          <input id="phone" name="phone" class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+          <label class="sk-label" for="phone">Telefon <span class="sk-muted font-medium">(valfritt)</span></label>
+          <input id="phone" name="phone" autocomplete="tel" class="sk-input">
         </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="password">Lösenord</label>
-          <input id="password" name="password" type="password" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
-        </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="password_confirm">Upprepa l&ouml;senord</label>
-          <input id="password_confirm" name="password_confirm" type="password" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
+        <div class="sk-authform__pair">
+          <div>
+            <label class="sk-label" for="password">Lösenord</label>
+            <input id="password" name="password" type="password" required autocomplete="new-password" class="sk-input">
+          </div>
+          <div>
+            <label class="sk-label" for="password_confirm">Upprepa lösenordet</label>
+            <input id="password_confirm" name="password_confirm" type="password" required autocomplete="new-password" class="sk-input">
+          </div>
         </div>
 
-        <button class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600">
-          Skapa konto
-        </button>
+        <button type="submit" class="sk-btn sk-btn--primary sk-btn--block">Skapa konto</button>
       </form>
+
+      <p class="sk-authswitch">Har du redan ett konto? <a class="sk-link" href="{{ url_for('auth.login_form') }}">Logga in</a></p>
     </div>
+
+    <figure class="sk-auth__photo">
+      <img
+        src="{{ url_for('static', filename='img/solsken/pennants-blue-sky.jpg') }}"
+        width="1000"
+        height="750"
+        alt="Flaggspel i många färger och ljusslingor mot en blå himmel"
+        loading="lazy"
+        decoding="async"
+      >
+      <div class="sk-valance" aria-hidden="true">{% for i in range(32) %}<span style="--i:{{ i }}"></span>{% endfor %}</div>
+    </figure>
   </div>
 </section>
 {% endblock %}

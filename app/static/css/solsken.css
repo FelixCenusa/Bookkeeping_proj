@@ -2467,25 +2467,67 @@ select.sk-input {
 .sk-auth__grid {
   display: grid;
   gap: 2rem;
+  grid-template-areas:
+    "head"
+    "panel"
+    "aside";
 }
 
 @media (min-width: 1024px) {
   .sk-auth__grid {
     grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    gap: 4rem;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "head panel"
+      "aside panel";
+    column-gap: 5rem;
+    row-gap: 2.75rem;
     align-items: start;
   }
 }
 
+.sk-auth__head { grid-area: head; }
+.sk-auth__panel { grid-area: panel; }
+.sk-auth__aside,
+.sk-auth__photo { grid-area: aside; }
+
 .sk-auth__panel {
   border: 2px solid var(--sk-ink);
-  padding: 1.5rem 1.25rem;
+  padding: 1.5rem 1.25rem 1.25rem;
 }
 
 @media (min-width: 768px) {
   .sk-auth__panel {
-    padding: 2.25rem 2.25rem 2.5rem;
+    padding: 2.25rem 2.25rem 1.75rem;
   }
+}
+
+.sk-authform {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.sk-authform .sk-btn {
+  margin-top: 0.4rem;
+}
+
+.sk-authform__pair {
+  display: grid;
+  gap: 1.1rem;
+}
+
+@media (min-width: 560px) {
+  .sk-authform__pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.sk-authswitch {
+  margin: 1.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sk-line);
+  font-size: 0.9375rem;
 }
 
 .sk-auth__aside {
@@ -2493,9 +2535,17 @@ select.sk-input {
   padding: 1.5rem 1.5rem 0;
 }
 
+.sk-auth__aside > :last-child {
+  padding-bottom: 1.75rem;
+}
+
 @media (min-width: 1024px) {
   .sk-auth__aside {
-    padding: 2rem 2rem 0;
+    padding: 1.75rem 2rem 0;
+  }
+
+  .sk-auth__aside > :last-child {
+    padding-bottom: 2rem;
   }
 }
 
@@ -2503,8 +2553,39 @@ select.sk-input {
   margin: 0;
 }
 
-.sk-auth__aside p + p {
-  margin-top: 0.75rem;
+.sk-authfacts {
+  display: grid;
+  gap: 1.1rem;
+  margin: 0;
+}
+
+.sk-authfacts dt {
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.sk-authfacts dd {
+  margin: 0.15rem 0 0;
+}
+
+.sk-auth__photo {
+  position: relative;
+  margin: 0;
+}
+
+.sk-auth__photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.sk-auth__photo .sk-valance {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 /* Detail lists (profile, booking). */
