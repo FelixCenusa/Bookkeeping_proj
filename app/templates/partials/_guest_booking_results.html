@@ -1,11 +1,67 @@
 {% import "_components.html" as ui with context %}
+{% set kv_input = "kv-input border-[#d9cfbe] bg-[#f2ece2] focus:border-[#f2b35b] focus:ring-4 focus:ring-[#f2b35b]/40" %}
+
+{% macro item_meta(c) -%}
+  {%- set dims = c|tent_dimensions -%}
+  {%- if c.is_tent -%}
+    {%- set area = c.floor_area_m2 if c.floor_area_m2 else ((dims.width * dims.length) if dims else none) -%}
+    {%- if c.capacity %}Upp till {{ c.capacity }} gäster{% endif %}{% if c.capacity and area %}, {% endif %}{% if area %}{{ ('%g'|format(area|float))|replace('.', ',') }} m²{% endif -%}
+  {%- elif c.notes and (c.notes.split()|first|lower) != (c.display_name.split()|first|lower) -%}
+    {{ c.notes }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro shared_stock(c) -%}
+<div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
+  <button
+    type="button"
+    class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[rgba(242,179,91,0.6)] text-[12px] font-bold text-[#f8c98a] transition-colors hover:bg-[rgba(242,179,91,0.16)]"
+    data-shared-stock-toggle
+    aria-expanded="false"
+    aria-label="Information om delat lager"
+  >
+    i
+  </button>
+  <div class="kv-popover fixed z-[60] hidden w-64 p-4 text-left text-sm" data-shared-stock-popover>
+    <div class="font-semibold">Delat lager</div>
+    <div class="mt-1 leading-snug text-[#4a5468]" data-shared-stock-message-for="{{ c.id }}"></div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro qty_stepper(c, disabled, input_id=None) -%}
+<div class="kv-qty" data-kv-qty>
+  <button type="button" class="kv-qty-btn" data-kv-step="-1" aria-label="En mindre, {{ c.display_name }}"{% if disabled %} disabled{% endif %}>&minus;</button>
+  <input
+    {% if input_id %}id="{{ input_id }}"{% endif %}
+    type="number"
+    min="0"
+    max="{{ c.available_items }}"
+    step="1"
+    value="0"
+    name="qty_{{ c.id }}"
+    inputmode="numeric"
+    aria-label="Antal, {{ c.display_name }}"
+    {% if disabled %}disabled{% endif %}
+    data-booking-qty
+    data-category-id="{{ c.id }}"
+    data-category-name="{{ c.display_name }}"
+    data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
+    data-setup-fee="{{ c.setup_service_fee or 0 }}"
+    data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
+    data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
+    data-available-item-ids='{{ c.available_item_ids|tojson }}'
+  >
+  <button type="button" class="kv-qty-btn" data-kv-step="1" aria-label="En till, {{ c.display_name }}"{% if disabled %} disabled{% endif %}>+</button>
+</div>
+{%- endmacro %}
 
 {% if categories is not none %}
   {% if has_selected_dates %}
   <form
     method="post"
     action="{{ url_for('routes.guest_booking_create') }}"
-    class="mt-6 space-y-6"
+    class="kv-has-totalbar pb-20 md:pb-28"
     id="guest-booking-form"
     novalidate
     data-delivery-quote-url="{{ url_for('routes.guest_delivery_quote') }}"
@@ -13,597 +69,491 @@
     <input type="hidden" name="start_date" value="{{ start_date }}">
     <input type="hidden" name="end_date" value="{{ end_date }}">
 
-    <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]" data-client-list>
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 2</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Välj artiklar</h2>
+    <div class="kv-datesbar">
+      <div class="kv-wrap flex min-h-[48px] items-center justify-between gap-4 py-2">
+        <p class="min-w-0 text-[0.95rem]">
+          <span class="text-[#9aa6b8]">Dina datum</span>
+          <strong class="kv-num ml-1.5 font-semibold text-[#f2ece2]">{{ start_date|swedish_date_range(end_date) }}</strong>
+          <span class="ml-1.5 text-[#9aa6b8]" data-kv-days data-start="{{ start_date }}" data-end="{{ end_date }}" hidden></span>
+        </p>
+        <a class="kv-link inline-flex min-h-[44px] items-center text-[0.95rem] font-semibold" href="#kv-dates" data-kv-change-dates>Ändra</a>
+      </div>
+    </div>
+
+    <div class="kv-wrap mt-10 grid gap-14 md:mt-14 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_23.5rem] xl:gap-16">
+      <div class="min-w-0 space-y-16">
+
+        <section data-client-list aria-labelledby="kv-step-items">
+          <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <h2 id="kv-step-items" class="kv-step-head">
+              <span class="kv-step-no" aria-hidden="true">2</span>
+              <span class="kv-display text-[1.9rem] md:text-[2.3rem]">Välj tält och tillbehör</span>
+            </h2>
+            <p class="text-sm text-[#9aa6b8]">{{ categories|length }} artiklar att välja bland</p>
           </div>
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier hittades
-          </div>
-        </div>
-
-        {% if categories|length > 0 %}
-          <div class="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div class="max-w-xl">
-              <label class="text-sm font-medium text-slate-700" for="item-search-input">Sök artiklar</label>
-              <p class="mt-1 text-xs text-slate-500">Filtrera på namn, typ, hyresperiod eller detaljer.</p>
-            </div>
-
-            <div class="flex w-full flex-col gap-3 sm:flex-row lg:max-w-2xl lg:items-center">
+          {% if categories|length > 0 %}
+            <div class="mt-6 flex items-center gap-4">
+              <label class="sr-only" for="item-search-input">Sök bland artiklarna</label>
               <input
                 id="item-search-input"
                 type="search"
                 data-client-list-search
-                placeholder="Sök tält, inredning, priser..."
-                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+                placeholder="Sök, till exempel tält, stolar eller ljusslinga"
+                class="{{ kv_input }} min-w-0 flex-1"
               >
               <div
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-pink-200 bg-pink-50 px-3 py-2 text-xs font-medium text-rose-500 shadow-sm"
+                class="kv-num whitespace-nowrap text-sm text-[#9aa6b8]"
                 id="item-search-count"
                 data-client-list-count
                 data-client-list-count-suffix="visas"
+                aria-live="polite"
               >
                 {{ categories|length }} visas
               </div>
             </div>
-          </div>
-        {% endif %}
-      </div>
+          {% endif %}
 
-      <div class="px-6 py-6 md:px-8">
-        {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier är tillgängliga för de datumen.</i>
-          </div>
-        {% else %}
-          <div class="grid gap-4 md:hidden">
-            {% for c in categories %}
-              {% set disabled = c.available_items == 0 or not c.has_standard_price %}
-              <div
-                class="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(180deg,#fffdfd_0%,#ffffff_100%)] p-4 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]"
-                data-item-card
-                data-client-list-item
-                data-client-list-group="cards"
-                data-search-text="{{ (
-                  c.display_name ~ ' ' ~
-                  ('tent ' if c.is_tent else '') ~
-                  ('furnishing ' if c.is_furnishing else '') ~
-                  (c.furnishing_kind or '') ~ ' ' ~
-                  (c.rental_period_label or '') ~ ' ' ~
-                  (c.notes or '')
-                )|lower }}"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <div class="font-semibold text-slate-900">{{ c.display_name }}</div>
-                    <div class="mt-1 flex flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
-                  </div>
-
-                  <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                    <span class="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700" data-availability-strict-for="{{ c.id }}">
-                      {{ c.available_items }} lediga
-                    </span>
-                    <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
-                      <button
-                        type="button"
-                        class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-                        data-shared-stock-toggle
-                        aria-expanded="false"
-                        aria-label="Information om delat lager"
-                      >
-                        i
-                      </button>
-                      <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                        <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
+          <div class="mt-6">
+            {% if categories|length == 0 %}
+              <div class="kv-panel px-5 py-6">
+                <p class="font-semibold">Inget är ledigt de här datumen.</p>
+                <p class="mt-1 text-[#b9c2cf]">Prova andra datum, eller ring <a class="kv-link kv-num" href="tel:0730813710">073-081 37 10</a> så hjälper vi dig.</p>
+              </div>
+            {% else %}
+              <div class="border-t border-[rgba(242,236,226,0.12)] md:hidden">
+                {% for c in categories %}
+                  {% set disabled = c.available_items == 0 or not c.has_standard_price %}
+                  <div
+                    class="border-b border-[rgba(242,236,226,0.12)] py-5{% if disabled %} kv-row-off{% endif %}"
+                    data-item-card
+                    data-client-list-item
+                    data-client-list-group="cards"
+                    data-search-text="{{ (
+                      c.display_name ~ ' ' ~
+                      ('tent ' if c.is_tent else '') ~
+                      ('furnishing ' if c.is_furnishing else '') ~
+                      (c.furnishing_kind or '') ~ ' ' ~
+                      (c.rental_period_label or '') ~ ' ' ~
+                      (c.notes or '')
+                    )|lower }}"
+                  >
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="min-w-0">
+                        <h3 class="text-[1.075rem] font-semibold leading-snug">{{ c.display_name }}</h3>
+                        {% set meta = item_meta(c) %}
+                        {% if meta|trim %}<p class="mt-0.5 text-sm text-[#9aa6b8]">{{ meta }}</p>{% endif %}
+                      </div>
+                      <div class="flex-none text-right">
+                        {% if c.has_standard_price %}
+                          <div class="kv-num text-[1.075rem] font-semibold">{{ c.quoted_period_price|sek }}</div>
+                          <div class="text-sm text-[#9aa6b8]">{{ (c.rental_period_label or '')|replace('-', '–') }}</div>
+                        {% else %}
+                          <div class="max-w-[12rem] text-sm text-[#f8c98a]">{{ c.standard_price_hint or 'Inget standardpris för de här datumen.' }}</div>
+                        {% endif %}
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div class="mt-4 grid gap-3 text-sm text-slate-600">
-                  <div>
-                    {% if c.has_standard_price %}
-                      <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                      <div class="text-xs text-slate-500">{{ c.rental_period_label }}</div>
-                    {% else %}
-                      <div class="font-medium text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</div>
-                    {% endif %}
+                    <div class="mt-3 flex items-center justify-between gap-4">
+                      <div class="min-w-0 text-sm">
+                        <div class="inline-flex items-center gap-2">
+                          <span class="{% if c.available_items > 0 %}text-[#d7dde6]{% else %}text-[#9aa6b8]{% endif %}" data-availability-strict-for="{{ c.id }}">{{ c.available_items }} lediga</span>
+                          {{ shared_stock(c) }}
+                        </div>
+                        {% if c.setup_service_fee %}<div class="text-[#9aa6b8]">Montering <span class="kv-num">{{ c.setup_service_fee|sek }}</span></div>{% endif %}
+                      </div>
+                      {{ qty_stepper(c, disabled, 'qty_mobile_' ~ c.id) }}
+                    </div>
                   </div>
+                {% endfor %}
+              </div>
 
-                  <div class="space-y-1">
-                    {% if c.is_tent %}
-                      <div>Kapacitet: {{ c.capacity }}</div>
-                      <div>Säsong: {{ c.season_rating }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                    {% else %}
-                      <div>{{ c.furnishing_kind }}</div>
-                      {% if c.setup_service_fee %}<div>Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                      {% if c.weight_kg %}<div>Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                    {% endif %}
-                  </div>
+              <div class="hidden md:block">
+                <div class="overflow-x-auto">
+                  <table class="kv-table">
+                    <thead>
+                      <tr>
+                        <th>Artikel</th>
+                        <th>Hyresperiod</th>
+                        <th class="text-right" data-sort-type="number">Pris</th>
+                        <th data-sort-type="number">Lediga</th>
+                        <th data-sort-type="number">Antal</th>
+                      </tr>
+                    </thead>
 
-                  <div>
-                    <label class="text-sm font-medium text-slate-700" for="qty_mobile_{{ c.id }}">Antal</label>
-                    <input
-                      id="qty_mobile_{{ c.id }}"
-                      type="number"
-                      min="0"
-                      max="{{ c.available_items }}"
-                      step="1"
-                      value="0"
-                      name="qty_{{ c.id }}"
-                      inputmode="numeric"
-                      {% if disabled %}disabled{% endif %}
-                      data-booking-qty
-                      data-category-id="{{ c.id }}"
-                      data-category-name="{{ c.display_name }}"
-                      data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
-                      data-setup-fee="{{ c.setup_service_fee or 0 }}"
-                      data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
-                      data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
-                      data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                      class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-                    >
-                  </div>
+                    <tbody>
+                      {% for c in categories %}
+                        {% set disabled = c.available_items == 0 or not c.has_standard_price %}
+                        <tr
+                          class="{% if disabled %}kv-row-off{% endif %}"
+                          data-item-row
+                          data-client-list-item
+                          data-client-list-group="rows"
+                          data-search-text="{{ (
+                            c.display_name ~ ' ' ~
+                            ('tent ' if c.is_tent else '') ~
+                            ('furnishing ' if c.is_furnishing else '') ~
+                            (c.furnishing_kind or '') ~ ' ' ~
+                            (c.rental_period_label or '') ~ ' ' ~
+                            (c.notes or '')
+                          )|lower }}"
+                        >
+                          <td class="min-w-[14rem]">
+                            <div class="font-semibold text-[#f2ece2]{% if disabled %} opacity-70{% endif %}">{{ c.display_name }}</div>
+                            {% set meta = item_meta(c) %}
+                            {% if meta|trim %}<div class="mt-0.5 text-sm text-[#9aa6b8]">{{ meta }}</div>{% endif %}
+                            {% if c.setup_service_fee %}<div class="text-sm text-[#9aa6b8]">Montering <span class="kv-num">{{ c.setup_service_fee|sek }}</span></div>{% endif %}
+                          </td>
+
+                          <td>
+                            {% if c.has_standard_price %}
+                              <span class="whitespace-nowrap">{{ (c.rental_period_label or '')|replace('-', '–') }}</span>
+                            {% else %}
+                              <span class="text-sm text-[#f8c98a]">{{ c.standard_price_hint or 'Inget standardpris för de här datumen.' }}</span>
+                            {% endif %}
+                          </td>
+
+                          <td class="text-right" data-sort-value="{{ c.quoted_period_price if c.has_standard_price else '' }}">
+                            {% if c.has_standard_price %}
+                              <span class="kv-num whitespace-nowrap font-semibold">{{ c.quoted_period_price|sek }}</span>
+                            {% else %}
+                              <span class="text-[#9aa6b8]">Ej bokbar</span>
+                            {% endif %}
+                          </td>
+
+                          <td>
+                            {% if c.available_items > 0 %}
+                              <div class="inline-flex items-center gap-2">
+                                <span class="kv-num font-semibold" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
+                                {{ shared_stock(c) }}
+                              </div>
+                            {% else %}
+                              <span class="kv-num text-[#9aa6b8]">0</span>
+                            {% endif %}
+                          </td>
+
+                          <td>
+                            {{ qty_stepper(c, disabled) }}
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            {% endfor %}
-          </div>
+            {% endif %}
 
-          <div class="hidden overflow-hidden rounded-[1.5rem] border border-slate-200 md:block">
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-sm">
-                <thead class="bg-[linear-gradient(90deg,#ec4899_0%,#f472b6_72%,#22c55e_140%)] text-white">
-                  <tr>
-                    <th class="p-3 text-left font-medium">Kategori</th>
-                    <th class="p-3 text-left font-medium">Typ</th>
-                    <th class="p-3 text-left font-medium">Period</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Pris</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Lediga nu</th>
-                    <th class="p-3 text-left font-medium">Detaljer</th>
-                    <th class="p-3 text-left font-medium" data-sort-type="number">Antal</th>
-                  </tr>
-                </thead>
+            <div
+              class="mt-6 grid gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between"
+              data-local-pager
+            >
+              <div class="flex items-center justify-between gap-4 sm:justify-start sm:gap-6">
+                <span class="kv-num text-sm text-[#b9c2cf]" data-pager-status>Visar 0 av 0</span>
+                <div class="flex items-center gap-2">
+                  <label class="text-sm text-[#9aa6b8]" for="items-per-page">Per sida</label>
+                  <select
+                    id="items-per-page"
+                    data-pager-per-page
+                    class="min-h-[40px] rounded-[8px] border border-[rgba(242,236,226,0.24)] bg-[#1b2639] px-3 text-sm text-[#f2ece2] focus:border-[#f2b35b] focus:outline-none focus:ring-2 focus:ring-[#f2b35b]/40"
+                  >
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+              </div>
 
-                <tbody class="divide-y divide-slate-200 bg-white">
-                  {% for c in categories %}
-                    {% set disabled = c.available_items == 0 or not c.has_standard_price %}
-                    <tr
-                      class="align-top"
-                      data-item-row
-                      data-client-list-item
-                      data-client-list-group="rows"
-                      data-search-text="{{ (
-                        c.display_name ~ ' ' ~
-                        ('tent ' if c.is_tent else '') ~
-                        ('furnishing ' if c.is_furnishing else '') ~
-                        (c.furnishing_kind or '') ~ ' ' ~
-                        (c.rental_period_label or '') ~ ' ' ~
-                        (c.notes or '')
-                      )|lower }}"
-                    >
-                      <td class="p-3">
-                        <div class="font-medium text-slate-900">{{ c.display_name }}</div>
-                        <div class="mt-1 text-xs text-slate-500">Kategori #{{ c.id }}</div>
-                      </td>
-
-                      <td class="p-3">
-                        {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.rental_period_label }}</div>
-                          <div class="mt-1 text-xs text-slate-500">
-                            {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                              1 dag
-                            {% else %}
-                              {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
-                            {% endif %}
-                          </div>
-                        {% else %}
-                          <span class="text-amber-700">{{ c.standard_price_hint or 'Perioden har inget standardpris för vald period.' }}</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.has_standard_price %}
-                          <div class="font-medium text-slate-900">{{ c.quoted_period_price }} kr</div>
-                        {% else %}
-                          <span class="text-slate-400">Ej tillgänglig</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        {% if c.available_items > 0 %}
-                          <div class="inline-flex items-center gap-1.5 text-xs font-medium">
-                            <span class="font-medium text-slate-900" data-availability-strict-for="{{ c.id }}">{{ c.available_items }}</span>
-                            <div class="hidden inline-flex items-center" data-shared-stock-notice-for="{{ c.id }}">
-                              <button
-                                type="button"
-                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-[11px] font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-                                data-shared-stock-toggle
-                                aria-expanded="false"
-                                aria-label="Information om delat lager"
-                              >
-                                i
-                              </button>
-                              <div class="fixed z-[60] hidden w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white p-3 text-left text-xs font-medium text-slate-700 shadow-xl" data-shared-stock-popover>
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">Delat lager</div>
-                                <div class="mt-1 leading-5" data-shared-stock-message-for="{{ c.id }}"></div>
-                              </div>
-                            </div>
-                          </div>
-                        {% else %}
-                          <span class="font-medium text-rose-600">0</span>
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3 text-xs text-slate-600">
-                        {% if c.is_tent %}
-                          <div>Kapacitet: {{ c.capacity }}</div>
-                          <div class="mt-1">Säsong: {{ c.season_rating }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                        {% else %}
-                          <div>{{ c.furnishing_kind }}</div>
-                          {% if c.setup_service_fee %}<div class="mt-1">Montering: {{ c.setup_service_fee }} kr</div>{% endif %}
-                          {% if c.weight_kg %}<div class="mt-1">Vikt: {{ c.weight_kg }} kg</div>{% endif %}
-                        {% endif %}
-                      </td>
-
-                      <td class="p-3">
-                        <input
-                          type="number"
-                          min="0"
-                          max="{{ c.available_items }}"
-                          step="1"
-                          value="0"
-                          name="qty_{{ c.id }}"
-                          inputmode="numeric"
-                          {% if disabled %}disabled{% endif %}
-                          data-booking-qty
-                          data-category-id="{{ c.id }}"
-                          data-category-name="{{ c.display_name }}"
-                          data-unit-price="{{ c.quoted_period_price if c.has_standard_price else 0 }}"
-                          data-setup-fee="{{ c.setup_service_fee or 0 }}"
-                          data-is-tent="{{ 'true' if c.is_tent else 'false' }}"
-                          data-is-furnishing="{{ 'true' if c.is_furnishing else 'false' }}"
-                          data-available-item-ids='{{ c.available_item_ids|tojson }}'
-                          class="w-24 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-                        >
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:flex">
+                <button type="button" data-pager-prev class="kv-btn kv-btn-ghost min-h-[44px] px-4 text-sm">Föregående</button>
+                <span data-pager-page class="kv-num whitespace-nowrap text-center text-sm text-[#b9c2cf]">Sida 1 av 1</span>
+                <button type="button" data-pager-next class="kv-btn kv-btn-ghost min-h-[44px] px-4 text-sm">Nästa</button>
+              </div>
             </div>
           </div>
-        {% endif %}
+        </section>
 
-        <div
-          class="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-          data-local-pager
-        >
-          <div class="text-sm text-slate-600">
-            <span data-pager-status>Visar 0 av 0</span>
-          </div>
+        <section aria-labelledby="kv-step-services">
+          <h2 id="kv-step-services" class="kv-step-head">
+            <span class="kv-step-no" aria-hidden="true">3</span>
+            <span class="kv-display text-[1.9rem] md:text-[2.3rem]">Leverans och montering</span>
+          </h2>
 
-          <div class="grid gap-3 min-[420px]:grid-cols-[auto_1fr] min-[420px]:items-center lg:flex lg:items-center lg:justify-end">
-            <div class="flex items-center gap-2">
-              <label class="text-sm font-medium text-slate-700" for="items-per-page">Rader</label>
-              <select
-                id="items-per-page"
-                data-pager-per-page
-                class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-pink-400 focus:outline-none focus:ring-4 focus:ring-pink-100"
+          <div class="mt-6 grid gap-3">
+            <label class="kv-option" for="include_delivery">
+              <input
+                type="checkbox"
+                name="include_delivery"
+                id="include_delivery"
+                class="kv-check mt-0.5"
               >
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
-
-            <div class="grid grid-cols-2 items-center gap-2 min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[420px]:justify-self-end sm:min-w-[18rem]">
-              <button
-                type="button"
-                data-pager-prev
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Föregående
-              </button>
-
-              <span
-                data-pager-page
-                class="hidden min-w-0 text-center text-sm font-medium text-slate-700 min-[420px]:block"
-              >
-                Sida 1 av 1
+              <span class="min-w-0">
+                <span class="kv-option-title block font-semibold">Leverans</span>
+                <span class="mt-1 block text-[#b9c2cf]">Vi kör ut till adressen du anger i steg 4. Priset räknas ut efter körsträckan.</span>
+                <span class="mt-1 block text-sm text-[#9aa6b8]">Adresskontroll och ruttberäkning görs med Geoapify.</span>
               </span>
+            </label>
 
-              <button
-                type="button"
-                data-pager-next
-                class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-pink-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+            <label class="kv-option" for="include_setup_service">
+              <input
+                type="checkbox"
+                name="include_setup_service"
+                id="include_setup_service"
+                class="kv-check mt-0.5"
               >
-                Nästa
-              </button>
-            </div>
+              <span class="min-w-0">
+                <span class="kv-option-title block font-semibold">Montering</span>
+                <span class="mt-1 block text-[#b9c2cf]" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
+              </span>
+            </label>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr_0.8fr] xl:items-start">
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 3</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Tjänster</h2>
-        </div>
-
-        <div class="space-y-5 px-6 py-6">
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
-            <input
-              type="checkbox"
-              name="include_delivery"
-              id="include_delivery"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-            >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera leverans</span>
-              <span class="mt-1 block">Vi validerar adressen och räknar ut avgiften utifrån körsträckan.</span>
-              <span class="mt-1 block text-xs text-slate-500">Adressvalidering och ruttberäkning använder Geoapify.</span>
-            </span>
-          </label>
-
-          <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/50 px-4 py-4">
-            <input
-              type="checkbox"
-              name="include_setup_service"
-              id="include_setup_service"
-              class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-            >
-            <span class="text-sm text-slate-700">
-              <span class="block font-medium text-slate-900">Inkludera montering</span>
-              <span class="mt-1 block" id="setup-service-help">Monteringsavgift läggs till för valda kategorier som har montering. Leverans krävs.</span>
-            </span>
-          </label>
-
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="booking_note">Bokningsanteckning</label>
+          <div class="mt-6">
+            <label class="kv-field-label" for="booking_note">Meddelande till oss <span class="font-normal text-[#9aa6b8]">(valfritt)</span></label>
             <textarea
               id="booking_note"
               name="booking_note"
               rows="4"
-              placeholder="Åtkomstinfo, tider, leveransinstruktioner..."
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
+              placeholder="Till exempel hur vi hittar fram eller när det passar att leverera."
+              class="{{ kv_input }}"
             ></textarea>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-        <div class="border-b border-slate-200 px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Steg 4</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">
-            {% if role == "customer" and customer_profile %}Ditt konto{% else %}Skapa konto{% endif %}
+        <section aria-labelledby="kv-step-account">
+          <h2 id="kv-step-account" class="kv-step-head">
+            <span class="kv-step-no" aria-hidden="true">4</span>
+            <span class="kv-display text-[1.9rem] md:text-[2.3rem]">
+              {% if role == "customer" and customer_profile %}Dina uppgifter{% else %}Dina uppgifter och konto{% endif %}
+            </span>
           </h2>
-        </div>
 
-        <div class="space-y-4 px-6 py-6">
           {% if role == "customer" and customer_profile %}
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-              Bokar som <span class="font-medium">{{ customer_profile.full_name }}</span>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.
-            </div>
-
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
-              <input
-                id="phone"
-                name="phone"
-                value="{{ customer_profile.phone or '' }}"
-                autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
+            <p class="mt-3 text-[#b9c2cf]">
+              Du bokar som <span class="font-semibold text-[#f2ece2]">{{ customer_profile.full_name }}</span>{% if customer_profile.email %} ({{ customer_profile.email }}){% endif %}.
+            </p>
           {% else %}
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="full_name">Fullständigt namn</label>
-              <input
-                id="full_name"
-                name="full_name"
-                required
-                autocomplete="name"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
-
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autocomplete="email"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
-
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="phone">Telefon</label>
-              <input
-                id="phone"
-                name="phone"
-                autocomplete="tel"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
+            <p class="mt-3 max-w-[56ch] text-[#b9c2cf]">
+              Vi skapar ett konto åt dig när du skickar bokningen, så att du kan följa den och boka igen.
+            </p>
           {% endif %}
 
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="address">Adress för bokningen (gata)</label>
-            <input
-              id="address"
-              name="address"
-              type="text"
-              value="{{ customer_profile.address if role == 'customer' and customer_profile and customer_profile.address else '' }}"
-              placeholder="T&auml;lt destination"
-              autocomplete="street-address"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-            >
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-slate-700" for="postal_city">Postort för bokningen</label>
-            <input
-              id="postal_city"
-              name="postal_city"
-              type="text"
-              value="{{ customer_profile.postal_city if role == 'customer' and customer_profile and customer_profile.postal_city else '' }}"
-              placeholder="Postort f&ouml;r T&auml;lt destination"
-              autocomplete="address-level2"
-              class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-            >
-          </div>
-
-          <p
-            id="delivery-address-error"
-            class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-          ></p>
-
-          {% if not (role == "customer" and customer_profile) %}
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="password">Lösenord</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
-            <div>
-              <label class="text-sm font-medium text-slate-700" for="password_confirm">Upprepa l&ouml;senord</label>
-              <input
-                id="password_confirm"
-                name="password_confirm"
-                type="password"
-                required
-                autocomplete="new-password"
-                class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100"
-              >
-            </div>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="rounded-[2rem] border bg-green-50/50 text-slate-900 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
-        <div class="border-b px-6 py-5">
-          <div class="text-xs font-medium uppercase tracking-[0.2em] text-green-400">Steg 5</div>
-          <h2 class="mt-1 text-xl font-black text-slate-950">Sammanfattning</h2>
-        </div>
-
-        <div class="space-y-3 px-6 py-6 text-sm">
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Artiklar</span>
-            <span id="summary-items" class="font-semibold text-slate-950">0 valda</span>
-          </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Hyra</span>
-            <span id="summary-rental" class="font-semibold text-slate-950">0 kr</span>
-          </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Montering</span>
-            <span id="summary-setup" class="font-semibold text-slate-950">Inte tillvalt</span>
-          </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-slate-500">Leverans</span>
-            <span id="summary-delivery" class="font-semibold text-slate-950">Inte tillvalt</span>
-          </div>
-
-          {% if customer_furnishing_without_tent_surcharge_enabled %}
-            <div id="summary-furnishing-surcharge-row" class="hidden">
-              <div class="flex items-center justify-between gap-4">
-                <span class="text-slate-500">Inredning utan tält (+25%)</span>
-                <span id="summary-furnishing-surcharge" class="font-semibold text-slate-950">0 kr</span>
+          <div class="mt-6 grid gap-x-5 gap-y-5 sm:grid-cols-2">
+            {% if role == "customer" and customer_profile %}
+              <div>
+                <label class="kv-field-label" for="phone">Telefon</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  value="{{ customer_profile.phone or '' }}"
+                  autocomplete="tel"
+                  class="{{ kv_input }}"
+                >
               </div>
-              <div id="summary-furnishing-surcharge-note" class="mt-2 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
+            {% else %}
+              <div class="sm:col-span-2">
+                <label class="kv-field-label" for="full_name">Namn</label>
+                <input
+                  id="full_name"
+                  name="full_name"
+                  required
+                  autocomplete="name"
+                  class="{{ kv_input }}"
+                >
               </div>
-            </div>
-          {% endif %}
 
-          {% if customer_prices_include_vat %}
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-slate-500">Moms (25%)</span>
-              <span id="summary-vat" class="font-semibold text-slate-950">0 kr</span>
-            </div>
-          {% endif %}
+              <div>
+                <label class="kv-field-label" for="email">E-post</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  class="{{ kv_input }}"
+                >
+              </div>
 
-          <div class="border-t border-pink-100 pt-3">
-            {% if customer_prices_include_vat %}
-              <div class="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span class="text-slate-500">Pris exkl. moms</span>
-                <span id="summary-subtotal" class="font-medium text-slate-900">0 kr</span>
+              <div>
+                <label class="kv-field-label" for="phone">Telefon</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  autocomplete="tel"
+                  class="{{ kv_input }}"
+                >
               </div>
             {% endif %}
-            <div class="flex items-center justify-between gap-4 text-base font-semibold">
-              <span>{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Total{% endif %}</span>
-              <span id="summary-total" class="text-rose-600">0 kr</span>
-            </div>
-          </div>
 
-          <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
-            <div class="text-sm font-semibold text-slate-900">Hyresvillkor</div>
-            <p class="mt-1 text-xs leading-5 text-slate-600">
-              L&#228;s hyresvillkoren innan du skickar bokningen:
-              <a
-                href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-semibold text-rose-600 underline underline-offset-4"
+            <div class="sm:col-span-2">
+              <label class="kv-field-label" for="address">Tält destination</label>
+              <input
+                id="address"
+                name="address"
+                type="text"
+                value="{{ customer_profile.address if role == 'customer' and customer_profile and customer_profile.address else '' }}"
+                placeholder="Gatuadress"
+                autocomplete="street-address"
+                aria-describedby="address-help"
+                class="{{ kv_input }}"
               >
-                &#214;ppna PDF
-              </a>
+              <p id="address-help" class="kv-field-help mt-1.5">Gatuadressen där tältet ska stå.</p>
+            </div>
+
+            <div>
+              <label class="kv-field-label" for="postal_city">Postort</label>
+              <input
+                id="postal_city"
+                name="postal_city"
+                type="text"
+                value="{{ customer_profile.postal_city if role == 'customer' and customer_profile and customer_profile.postal_city else '' }}"
+                placeholder="Till exempel Karlshamn"
+                autocomplete="address-level2"
+                class="{{ kv_input }}"
+              >
+            </div>
+
+            <p
+              id="delivery-address-error"
+              class="hidden rounded-[6px] border border-[rgba(243,155,143,0.5)] bg-[rgba(243,155,143,0.1)] px-4 py-3 text-sm text-[#f7d3cd] sm:col-span-2"
+            ></p>
+
+            {% if not (role == "customer" and customer_profile) %}
+              <div class="sm:col-start-1">
+                <label class="kv-field-label" for="password">Välj lösenord</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  autocomplete="new-password"
+                  class="{{ kv_input }}"
+                >
+              </div>
+              <div>
+                <label class="kv-field-label" for="password_confirm">Upprepa lösenordet</label>
+                <input
+                  id="password_confirm"
+                  name="password_confirm"
+                  type="password"
+                  required
+                  autocomplete="new-password"
+                  class="{{ kv_input }}"
+                >
+              </div>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+
+      <aside id="kv-summary" class="min-w-0 lg:sticky lg:top-[calc(var(--kv-nav-h)+4.5rem)] lg:self-start">
+        <div class="kv-receipt-wrap">
+          <section class="kv-receipt px-5 pt-6 sm:px-7 sm:pt-7" data-kv-receipt aria-labelledby="kv-step-summary">
+            <h2 id="kv-step-summary" class="kv-step-head">
+              <span class="kv-step-no text-[#9a5b12]" aria-hidden="true">5</span>
+              <span class="kv-display text-[1.75rem]">Sammanfattning</span>
+            </h2>
+            <p class="kv-num mt-2 text-sm text-[#4a5468]">{{ start_date|swedish_date_range(end_date) }}<span class="ml-1.5" data-kv-days data-start="{{ start_date }}" data-end="{{ end_date }}" hidden></span></p>
+
+            <hr class="kv-receipt-rule my-5">
+
+            <div class="space-y-2.5">
+              <div class="kv-receipt-line">
+                <span>Artiklar</span>
+                <span id="summary-items">0 valda</span>
+              </div>
+
+              <div class="kv-receipt-line">
+                <span>Hyra</span>
+                <span id="summary-rental">0 kr</span>
+              </div>
+
+              <div class="kv-receipt-line">
+                <span>Montering</span>
+                <span id="summary-setup">Inte tillvalt</span>
+              </div>
+
+              <div class="kv-receipt-line">
+                <span>Leverans</span>
+                <span id="summary-delivery">Inte tillvalt</span>
+              </div>
+
+              {% if customer_furnishing_without_tent_surcharge_enabled %}
+                <div id="summary-furnishing-surcharge-row" class="hidden">
+                  <div class="kv-receipt-line">
+                    <span>Inredning utan tält (+25%)</span>
+                    <span id="summary-furnishing-surcharge">0 kr</span>
+                  </div>
+                  <div id="summary-furnishing-surcharge-note" class="mt-2 hidden rounded-[6px] bg-[rgba(201,138,52,0.16)] px-3 py-2.5 text-sm text-[#5c3a0c]">
+                    Bokningen innehåller inget tält, därför läggs ett tillägg på 25% på all inredning.
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if customer_prices_include_vat %}
+                <div class="kv-receipt-line">
+                  <span>Moms (25%)</span>
+                  <span id="summary-vat">0 kr</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <hr class="kv-receipt-rule my-5">
+
+            {% if customer_prices_include_vat %}
+              <div class="kv-receipt-line mb-2">
+                <span>Pris exkl. moms</span>
+                <span id="summary-subtotal">0 kr</span>
+              </div>
+            {% endif %}
+            <div class="flex items-end justify-between gap-4">
+              <span class="pb-1 font-semibold">{% if customer_prices_include_vat %}Totalt inkl. moms{% else %}Totalt{% endif %}</span>
+              <span id="summary-total" class="kv-total-value -mr-1 px-1">0 kr</span>
+            </div>
+
+            <hr class="kv-receipt-rule my-5">
+
+            <p class="text-sm leading-relaxed text-[#4a5468]">
+              Läs <a href="{{ url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') }}" target="_blank" rel="noopener noreferrer" class="font-semibold">hyresvillkoren (PDF)</a> innan du skickar bokningen.
             </p>
 
-            <label class="mt-3 flex items-start gap-3 text-sm text-slate-700" for="accept_rental_terms">
+            <label class="mt-3 flex min-h-[44px] items-start gap-3 text-[0.95rem]" for="accept_rental_terms">
               <input
                 type="checkbox"
                 id="accept_rental_terms"
                 name="accept_rental_terms"
                 value="1"
                 required
-                class="mt-1 h-4 w-4 rounded border-pink-300 text-pink-500 focus:ring-pink-400"
+                class="kv-check mt-0.5"
               >
-              <span>Jag har l&#228;st och godk&#228;nner hyresvillkoren.</span>
+              <span>Jag har läst och godkänner hyresvillkoren.</span>
             </label>
-          </div>
 
-          <p id="form-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></p>
+            <p id="form-error" class="mt-3 hidden rounded-[6px] border border-[#d9594a]/50 bg-[#fbe4df] px-3 py-2.5 text-sm text-[#8a2417]" role="alert"></p>
 
-          <button
-            type="submit"
-            class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-pink-300 disabled:hover:bg-pink-300"
-          >
-            {% if role == "customer" and customer_profile %}Skicka bokning{% else %}Skicka bokning och skapa konto{% endif %}
-          </button>
+            <button
+              type="submit"
+              class="kv-btn kv-btn-ink mt-4 w-full whitespace-normal py-3 text-center leading-tight"
+            >
+              {% if role == "customer" and customer_profile %}Skicka bokning{% else %}Skicka bokning och skapa konto{% endif %}
+            </button>
 
-          <p class="text-xs text-slate-500">
-            Bokningen skapas som väntande. Lagret reserveras tillfälligt tills personalen bekräftar den.
-          </p>
+            <p class="mt-3 text-sm leading-relaxed text-[#4a5468]">
+              Bokningen är väntande tills vi bekräftar den. Så länge håller vi artiklarna åt dig.
+            </p>
+          </section>
         </div>
-      </section>
+      </aside>
+    </div>
+
+    <div class="kv-totalbar is-hidden" data-kv-totalbar>
+      <a class="kv-wrap flex min-h-[68px] items-center justify-between gap-4" href="#kv-summary">
+        <span class="leading-tight">
+          <span class="block text-sm text-[#4a5468]" data-kv-items>0 valda</span>
+          <span class="kv-display kv-num block text-[1.6rem]" data-kv-total>0 kr</span>
+        </span>
+        <span class="kv-btn kv-btn-ink min-h-[44px] px-5 text-sm">Till sammanfattningen</span>
+      </a>
     </div>
   </form>
 
@@ -1095,153 +1045,154 @@
     });
   </script>
   {% else %}
-    <section class="mt-6 rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)]">
-      <div class="border-b border-pink-100 bg-[linear-gradient(180deg,rgba(253,242,248,0.55),rgba(255,255,255,0.96))] px-6 py-5 md:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium uppercase tracking-[0.2em] text-rose-400">Sortiment</div>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">Tillgängliga artiklar och priser</h2>
-            <p class="mt-2 max-w-2xl text-sm text-slate-600">
-              Välj datum ovan för exakt tillgänglighet och bokning.
-            </p>
-          </div>
+    {% set tents = categories|selectattr('is_tent')|list %}
+    {% set extras = categories|rejectattr('is_tent')|list %}
 
-          <div class="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-            {{ categories|length }} kategorier visas
+    {% macro price_popover(c) -%}
+      <div data-price-popover-root>
+        <button
+          type="button"
+          data-price-popover-toggle
+          aria-expanded="false"
+          class="kv-price-toggle"
+        >
+          <span>Alla priser</span>
+          <span class="kv-price-toggle-caret" aria-hidden="true"></span>
+        </button>
+
+        <div
+          class="kv-popover fixed z-[80] hidden p-4"
+          data-price-popover-panel
+        >
+          <div class="flex items-center justify-between gap-3">
+            <p class="font-semibold">{{ c.display_name }}</p>
+            <button
+              type="button"
+              data-price-popover-close
+              class="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full text-[1.35rem] leading-none text-[#4a5468] transition-colors hover:bg-[rgba(20,29,46,0.08)] hover:text-[#141d2e]"
+              aria-label="Stäng prislista"
+            >&times;</button>
           </div>
+          <dl class="mt-2 text-[0.95rem]">
+            {% for price_row in c.all_period_prices %}
+              <div class="flex items-baseline justify-between gap-4 border-t border-dashed border-[rgba(20,29,46,0.2)] py-2">
+                <dt class="text-[#4a5468]">{{ price_row.label|replace('-', '–') }}</dt>
+                <dd class="kv-num font-semibold">{{ price_row.price|sek }}</dd>
+              </div>
+            {% endfor %}
+            {% if c.setup_service_fee %}
+              <div class="flex items-baseline justify-between gap-4 border-t border-dashed border-[rgba(20,29,46,0.2)] py-2">
+                <dt class="text-[#4a5468]">Montering, om du väljer det</dt>
+                <dd class="kv-num font-semibold">{{ c.setup_service_fee|sek }}</dd>
+              </div>
+            {% endif %}
+          </dl>
         </div>
       </div>
+    {%- endmacro %}
 
-      <div class="px-6 py-6 md:px-8">
+    {% macro from_price(c) -%}
+      {% if c.all_period_prices %}
+        {% set cheapest = c.all_period_prices|sort(attribute='price')|first %}
+        <p class="kv-num whitespace-nowrap text-right text-[1.1rem] font-semibold">från {{ cheapest.price|sek }}</p>
+        <p class="text-right text-sm text-[#9aa6b8]">{{ cheapest.label|replace('-', '–') }}</p>
+      {% elif c.has_standard_price %}
+        <p class="kv-num whitespace-nowrap text-right text-[1.1rem] font-semibold">{{ c.quoted_period_price|sek }}</p>
+        <p class="text-right text-sm text-[#9aa6b8]">{{ (c.rental_period_label or '')|replace('-', '–') }}</p>
+      {% else %}
+        <p class="text-right text-sm text-[#f8c98a]">Pris på förfrågan</p>
+      {% endif %}
+    {%- endmacro %}
+
+    <section class="pb-8 md:pb-12" aria-labelledby="kv-range-title">
+      <div class="kv-wrap">
         {% if categories|length == 0 %}
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <i>Inga kategorier finns att visa just nu.</i>
-          </div>
+          <h2 id="kv-range-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Sortimentet</h2>
+          <p class="mt-4 text-[#b9c2cf]">Det finns inget att visa just nu. Ring <a class="kv-link kv-num" href="tel:0730813710">073-081 37 10</a> så berättar vi vad som går att hyra.</p>
         {% else %}
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {% for c in categories %}
-              {% set furnishing_theme = c.is_furnishing %}
-              <article class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_18px_45px_-36px_rgba(15,23,42,0.12)]">
-                <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                  <div>
-                    <h3 class="font-semibold text-slate-900">{{ c.display_name }}</h3>
-                    <div class="mt-2 hidden flex-wrap gap-2">
-                      {{ ui.inventory_type_badges(c.is_tent, c.is_furnishing, variant='customer', tent_label='Tält', furnishing_label='Inredning') }}
-                    </div>
-                  </div>
-
-                  <span class="inline-flex rounded-full border px-3 py-1 text-xs font-medium {% if furnishing_theme %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-pink-200 bg-pink-50 text-rose-600{% endif %}">
-                    {% if c.is_tent %}
-                      Tält
-                    {% elif c.is_furnishing %}
-                      Inredning
-                    {% else %}
-                      Kategori
-                    {% endif %}
-                  </span>
-                </div>
-
-                <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-4">
-                  {% if c.all_period_prices %}
-                    <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">Priser</div>
-                    {% set cheapest_price_row = (c.all_period_prices|sort(attribute='price')|first) %}
-                    <div class="mt-3">
-                      <div class="text-lg font-semibold text-slate-950">Från {{ cheapest_price_row.price }} kr</div>
-                      <div class="mt-1 text-xs text-slate-500">
-                        {{ cheapest_price_row.label }}
-                        {% if cheapest_price_row.min_days == 1 and cheapest_price_row.max_days == 1 %}
-                          • 1 dag
-                        {% else %}
-                          • {{ cheapest_price_row.min_days }}-{{ cheapest_price_row.max_days }} dagar
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="mt-3" data-price-popover-root>
-                      {% set price_option_count = c.all_period_prices|length + (1 if c.setup_service_fee else 0) %}
-                      <button
-                        type="button"
-                        data-price-popover-toggle
-                        aria-expanded="false"
-                        class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <span>Visa alla priser</span>
-                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          {{ price_option_count }} st
-                        </span>
-                      </button>
-
-                      <div
-                        class="fixed z-[80] hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
-                        data-price-popover-panel
-                      >
-                        <div class="mb-3 flex items-center justify-between gap-3">
-                          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                            Priser
-                          </div>
-                          <button
-                            type="button"
-                            data-price-popover-close
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 pb-0.5 text-sm font-semibold leading-none text-slate-600 transition hover:bg-slate-100"
-                            aria-label="Stäng prislista"
-                          >
-                            x
-                          </button>
-                        </div>
-
-                        <div class="space-y-2">
-                        {% for price_row in c.all_period_prices %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">{{ price_row.label }}</div>
-                              <div class="mt-1 text-xs text-slate-500">
-                                {% if price_row.min_days == 1 and price_row.max_days == 1 %}
-                                  1 dag
-                                {% else %}
-                                  {{ price_row.min_days }}-{{ price_row.max_days }} dagar
-                                {% endif %}
-                              </div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ price_row.price }} kr</div>
-                          </div>
-                        {% endfor %}
-                        {% if c.setup_service_fee %}
-                          <div class="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm">
-                            <div>
-                              <div class="font-medium text-slate-900">Montering</div>
-                              <div class="mt-1 text-xs text-slate-500">Tillkommer vid val av montering.</div>
-                            </div>
-                            <div class="shrink-0 font-semibold text-slate-900">{{ c.setup_service_fee }} kr</div>
-                          </div>
-                        {% endif %}
-                      </div>
-                    </div>
-                  {% elif c.has_standard_price %}
-                    <div class="text-lg font-semibold text-slate-950">{{ c.quoted_period_price }} kr</div>
-                    <div class="mt-1 text-xs text-slate-500">
-                      {{ c.rental_period_label }}
-                      {% if c.rental_period_min_days == 1 and c.rental_period_max_days == 1 %}
-                        • 1 dag
-                      {% else %}
-                        • {{ c.rental_period_min_days }}-{{ c.rental_period_max_days }} dagar
-                      {% endif %}
-                    </div>
-                  {% else %}
-                    <div class="text-sm font-semibold text-amber-700">Standardpris saknas</div>
-                    <div class="mt-1 text-xs text-slate-500">Kontakta oss för prisuppgift.</div>
-                  {% endif %}
-                </div>
-
-                {% if c.is_tent %}
-                  <div class="mt-4 space-y-1 text-sm text-slate-600">
-                    <div>Kapacitet: {{ c.capacity }}</div>
-                    <div>Säsong: {{ c.season_rating }}</div>
-                  </div>
+          <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+            <div class="lg:col-span-5">
+              <div class="lg:sticky lg:top-[calc(var(--kv-nav-h)+2.5rem)]">
+                <h2 id="kv-range-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Tälten</h2>
+                {% if tents %}
+                  {% set smallest = tents|first|tent_dimensions %}
+                  {% set largest = tents|last|tent_dimensions %}
+                  {% set capacities = tents|map(attribute='capacity')|select|list %}
+                  <p class="mt-4 max-w-[40ch] text-lg leading-relaxed text-[#cfd6e0]">
+                    {{ tents|length }} storlekar{% if smallest and largest %}, från {{ smallest.width }}×{{ smallest.length }} till {{ largest.width }}×{{ largest.length }} meter{% endif %}{% if capacities %}, för {{ capacities|min }} till {{ capacities|max }} gäster{% endif %}. Priset gäller hela hyresperioden. Välj datum så ser du vad som är ledigt.
+                  </p>
                 {% endif %}
-              </article>
-            {% endfor %}
+                <figure class="kv-photo mt-10 hidden aspect-[3/2] lg:block">
+                  <img
+                    src="{{ url_for('static', filename='img/kvallsljus/tent-peak-lights-night.jpg') }}"
+                    width="1400"
+                    height="933"
+                    alt="Toppen på ett vitt tält mot natthimlen, med ljusslingor längs stagen"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                </figure>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7">
+              <ul class="space-y-9">
+                {% for c in tents %}
+                  {% set dims = c|tent_dimensions %}
+                  <li>
+                    <div class="kv-menu-row">
+                      <h3 class="kv-leader">
+                        <span class="kv-display kv-num whitespace-nowrap text-[2rem] leading-none md:text-[2.4rem]">{% if dims %}{{ dims.width }}<span class="kv-times">×</span>{{ dims.length }} m{% else %}{{ c.display_name }}{% endif %}</span>
+                      </h3>
+                      <div>{{ from_price(c) }}</div>
+                    </div>
+                    <div class="mt-1 flex flex-wrap items-center justify-between gap-x-6">
+                      <p class="text-[#b9c2cf]">{{ item_meta(c) }}</p>
+                      {% if c.all_period_prices %}{{ price_popover(c) }}{% endif %}
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
           </div>
+
         {% endif %}
       </div>
+
+      {% if extras %}
+        <div class="kv-banner mt-20 md:mt-28">
+          <figure class="kv-banner-media">
+            <img
+              src="{{ url_for('static', filename='img/kvallsljus/long-table-candles-tent.jpg') }}"
+              width="1400"
+              height="933"
+              alt="Ett långbord dukat med blommor och tända ljus inne i ett tält"
+              loading="lazy"
+              decoding="async"
+            >
+          </figure>
+          <div class="kv-wrap kv-banner-text">
+            <h2 id="kv-extras-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Bord, stolar och ljus</h2>
+            <p class="mt-3 max-w-[40ch] text-lg leading-relaxed text-[#d7dde6]">Möblera tältet och häng upp ljusslingor. Du lägger till dem i samma bokning.</p>
+          </div>
+        </div>
+        <div class="kv-wrap">
+          <ul class="mt-4 grid gap-x-16 md:mt-10 md:grid-cols-2">
+            {% for c in extras %}
+              <li class="border-t border-[rgba(242,236,226,0.1)] py-5">
+                <div class="kv-menu-row">
+                  <h3 class="kv-leader"><span class="text-[1.15rem] font-semibold">{{ c.display_name }}</span></h3>
+                  <div>{{ from_price(c) }}</div>
+                </div>
+                <div class="mt-0.5 flex flex-wrap items-center justify-between gap-x-6">
+                  <p class="text-[#9aa6b8]">{{ item_meta(c) }}</p>
+                  {% if c.all_period_prices %}{{ price_popover(c) }}{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
     </section>
     <script>
       function initGuestCatalogPricePopovers(root = document) {
