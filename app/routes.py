@@ -40,6 +40,7 @@ from .delivery import (
 )
 from .mailer import send_booking_event_email
 from .pricing import apply_vat
+from .presentation import catalog_order
 from .price_sync import (
     apply_price_catalog,
     export_price_catalog,
@@ -272,7 +273,7 @@ FAQ_ITEMS = [
     {
         "question": "Hur långt i förväg måste jag boka?",
         "answer": (
-            "För den din bokningen behöver startdatum ligga minst sju dagar fram. "
+            "Startdatum för din bokning behöver ligga minst sju dagar fram. "
             "Det ger tid för planering, leverans och eventuell montering."
         ),
     },
@@ -280,8 +281,8 @@ FAQ_ITEMS = [
         "question": "Kan jag få leverans och montering?",
         "answer": (
             "Ja. Leverans kan läggas till i bokningen och priset räknas ut utifrån "
-            "körsträckan. Montering samt nedmontering kan väljas för och kostar för "
-            "tält om tilvalt hjälper vi även med möblering."
+            "körsträckan. Montering och nedmontering av tält kan väljas till mot en "
+            "avgift. Väljer du montering hjälper vi även till med möbleringen."
         ),
     },
     {
@@ -297,8 +298,8 @@ FAQ_ITEMS = [
         "answer": (
             "Du får en bokning skapad i systemet och lagret reserveras under en "
             "begränsad tid medan bokningen är väntande. Personalen kan sedan "
-            "bekräfta bokningen eller kontakta dig om något behöver justeras."
-            "DU kan alltid se din status här i hemsidan ifall du loggar in."
+            "bekräfta bokningen eller kontakta dig om något behöver justeras. "
+            "När du är inloggad kan du alltid se status för din bokning här på hemsidan."
         ),
     },
     {
@@ -2684,7 +2685,7 @@ def home():
     context = {
         "start_date": start,
         "end_date": end,
-        "categories": categories,
+        "categories": catalog_order(categories),
         "has_selected_dates": has_selected_dates,
         "customer_profile": customer_profile,
         "role": role,
@@ -2842,7 +2843,7 @@ def guest_booking_create():
     booking_note = _to_str_or_none(request.form.get("booking_note"))
 
     if not accepted_rental_terms:
-        flash("Du mÃ¥ste godkÃ¤nna hyresvillkoren innan bokningen kan skickas.", "error")
+        flash("Du måste godkänna hyresvillkoren innan bokningen kan skickas.", "error")
         return redirect(url_for("routes.home", start_date=start, end_date=end))
 
     if include_setup_service and not include_delivery:

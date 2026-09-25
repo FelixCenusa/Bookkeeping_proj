@@ -595,7 +595,15 @@
       });
     };
 
-    const formatMoney = (value) => `${value.toFixed(2)} kr`;
+    const formatMoney = (value) => {
+      const rounded = Math.round(value * 100) / 100;
+      const fractionDigits = Number.isInteger(rounded) ? 0 : 2;
+      const digits = rounded.toLocaleString("sv-SE", {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+      });
+      return `${digits} kr`;
+    };
     const normalizeAddress = (value) => String(value || "").trim().replace(/\s+/g, " ");
     const normalizeSearchText = (value) => normalizeAddress((value || "").toLowerCase());
     const stripPostalCodeFromCity = (value) =>

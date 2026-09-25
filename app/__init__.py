@@ -9,6 +9,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .db import init_db, close_db
 from .routes import bp as routes_bp
 from .auth import bp as auth_bp
+from .presentation import register_template_filters
 
 
 def _env_flag(name, default=False):
@@ -246,6 +247,7 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(routes_bp)
+    register_template_filters(app)
 
     app.logger.info(
         "mail_config_ready enabled=%s host=%s port=%s ssl=%s starttls=%s from_email=%s",
