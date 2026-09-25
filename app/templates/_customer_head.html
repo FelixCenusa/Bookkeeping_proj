@@ -1,5 +1,18 @@
 
-  <script>document.documentElement.classList.add("sk-js");</script>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.add("sk-js");
+      // Load-in and scroll reveals: only with motion allowed, and only until
+      // solsken.js takes over. If it has not within 2 s, show everything.
+      if (window.matchMedia && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        root.classList.add("sk-motion");
+        window.setTimeout(function () {
+          if (!root.classList.contains("sk-motion-on")) root.classList.remove("sk-motion");
+        }, 2000);
+      }
+    })();
+  </script>
   <script>
     tailwind.config = {
       theme: {
@@ -29,4 +42,5 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/solsken.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/motion@13.4.4/dist/motion.min.js" defer></script>
   <script src="{{ url_for('static', filename='js/solsken.js') }}" defer></script>

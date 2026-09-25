@@ -1091,7 +1091,7 @@
               {% set dims = c|tent_dimensions %}
               {% set area = c.floor_area_m2 or ((dims.width * dims.length) if dims else none) %}
               {% set cheapest = (c.all_period_prices|sort(attribute='price')|first) if c.all_period_prices else none %}
-              <article class="sk-tent">
+              <article class="sk-tent" data-reveal="scroll">
                 <div class="sk-canopy sk-scallop sk-bg-{{ sk_canopy_colours[loop.index0 % 6] }}">
                   {% if dims %}
                     <h3 class="sk-canopy__dims"><span class="sr-only">Tält </span>{{ c.display_name.replace('Tält', '').replace(' m', '').strip() }}<small>&nbsp;m</small></h3>
@@ -1140,7 +1140,7 @@
           <ul class="sk-menu sk-split__list" role="list">
             {% for c in sk_others %}
               {% set cheapest = (c.all_period_prices|sort(attribute='price')|first) if c.all_period_prices else none %}
-              <li class="sk-menu__item">
+              <li class="sk-menu__item" data-reveal="scroll">
                 {% if c.all_period_prices %}
                   <div data-price-popover-root>
                     <button type="button" class="sk-menu__toggle" data-price-popover-toggle aria-expanded="false">

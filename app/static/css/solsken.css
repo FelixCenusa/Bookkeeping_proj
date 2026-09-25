@@ -3079,6 +3079,13 @@ select.sk-input {
     clip-path: inset(0 0 0 0);
   }
 
+  /* Load-in and scroll reveals run in solsken.js with Motion. The head script
+     sets .sk-motion only when motion is allowed and removes it again if the
+     script has not taken over within 2 s, so nothing stays hidden. */
+  .sk-motion [data-reveal] {
+    opacity: 0;
+  }
+
   /* Valance and bunting: a small spring sway, pointer devices only. */
   @media (hover: hover) and (pointer: fine) {
     .sk-valance > span,
@@ -3105,13 +3112,14 @@ select.sk-input {
     .sk-bunting__item:nth-child(4) .sk-bunting__flag { --i: 6; }
 
     /* Tent cards: the canopy lifts on a spring. The card itself never
-       transforms because it holds the fixed price popover. */
+       transforms because it holds the fixed price popover. The lift uses
+       translate, so the load-in's leftover inline transform cannot block it. */
     .sk-canopy {
-      transition: transform 600ms var(--sk-spring);
+      transition: translate 600ms var(--sk-spring);
     }
 
     .sk-tent:hover .sk-canopy {
-      transform: translateY(-6px);
+      translate: 0 -6px;
     }
   }
 }

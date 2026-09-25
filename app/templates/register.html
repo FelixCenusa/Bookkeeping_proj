@@ -3,11 +3,11 @@
 <section class="sk-auth">
   <div class="sk-container sk-auth__grid">
     <div class="sk-auth__head">
-      <h1 class="sk-h1">Skapa konto</h1>
-      <p class="sk-lead mt-5">Med ett konto följer du dina bokningar och slipper fylla i dina uppgifter varje gång.</p>
+      <h1 class="sk-h1" data-reveal="load">Skapa konto</h1>
+      <p class="sk-lead mt-5" data-reveal="load">Med ett konto följer du dina bokningar och slipper fylla i dina uppgifter varje gång.</p>
     </div>
 
-    <div class="sk-auth__panel">
+    <div class="sk-auth__panel" data-reveal="load">
       <form method="post" class="sk-authform">
         <div>
           <label class="sk-label" for="full_name">Namn</label>
@@ -38,7 +38,7 @@
       <p class="sk-authswitch">Har du redan ett konto? <a class="sk-link" href="{{ url_for('auth.login_form') }}">Logga in</a></p>
     </div>
 
-    <figure class="sk-auth__photo">
+    <figure class="sk-auth__photo" data-reveal="load">
       <img
         src="{{ url_for('static', filename='img/solsken/pennants-blue-sky.jpg') }}"
         width="1000"

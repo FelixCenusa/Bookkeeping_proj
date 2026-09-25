@@ -29,6 +29,105 @@
     });
   };
 
+  // ---------------------------------------------------------------- motion
+  // The page head eases up on load, and tent cards and the furniture list
+  // fade in with a small stagger as they scroll into view (Motion, motion.dev).
+  // CSS hides [data-reveal] only while html.sk-motion is set; see the head
+  // script. Anything that holds a fixed price popover animates opacity only.
+  const Motion = window.Motion;
+  const EASE_OUT = [0.23, 1, 0.32, 1];
+  let revealStops = [];
+
+  const motionReady = () =>
+    Boolean(Motion && typeof Motion.animate === "function" && typeof Motion.inView === "function" && typeof Motion.stagger === "function");
+
+  const showEverything = () => root.classList.remove("sk-motion");
+
+  const isRendered = (el) => el.getClientRects().length > 0;
+
+  const loadIn = () => {
+    const { animate, stagger } = Motion;
+    const items = Array.from(document.querySelectorAll('[data-reveal="load"]'));
+    const shown = items.filter(isRendered);
+    // Hidden now (the compact hero drops the photo) but may show later.
+    items.filter((el) => !shown.includes(el)).forEach((el) => { el.style.opacity = "1"; });
+
+    const photos = shown.filter((el) => el.tagName === "FIGURE");
+    const blocks = shown.filter((el) => el.tagName !== "FIGURE");
+    if (blocks.length) {
+      animate(blocks, { opacity: [0, 1], transform: ["translateY(12px)", "translateY(0px)"] }, {
+        duration: 0.5,
+        delay: stagger(0.08),
+        ease: EASE_OUT,
+      });
+    }
+    if (photos.length) {
+      animate(photos, { opacity: [0, 1], transform: ["scale(0.98)", "scale(1)"] }, {
+        duration: 0.6,
+        delay: stagger(0.08, { startDelay: Math.min(blocks.length, 3) * 0.08 }),
+        ease: EASE_OUT,
+      });
+    }
+
+    // One ambient touch: the hero's scalloped edge settles with a small sway.
+    const valance = Array.from(document.querySelectorAll(".sk-hero__photo .sk-valance > span"));
+    if (valance.length && isRendered(valance[0])) {
+      animate(valance, { transform: ["rotate(-7deg)", "rotate(0deg)"] }, {
+        type: "spring",
+        bounce: 0.5,
+        duration: 0.8,
+        delay: stagger(0.012, { startDelay: 0.3 }),
+      });
+    }
+  };
+
+  const bindReveals = (scope) => {
+    const { animate, inView, stagger } = Motion;
+    const targets = Array.from(scope.querySelectorAll('[data-reveal="scroll"]'));
+    if (!targets.length) return;
+    let queue = [];
+    let queued = false;
+
+    // Everything that enters in the same frame is staggered as one group.
+    const flush = () => {
+      queued = false;
+      const batch = queue;
+      queue = [];
+      animate(batch, { opacity: [0, 1] }, { duration: 0.45, delay: stagger(0.06), ease: EASE_OUT });
+      const canopies = batch.map((el) => el.querySelector(".sk-canopy")).filter(Boolean);
+      if (canopies.length) {
+        animate(canopies, { transform: ["translateY(14px)", "translateY(0px)"] }, {
+          duration: 0.5,
+          delay: stagger(0.06),
+          ease: EASE_OUT,
+        });
+      }
+    };
+
+    revealStops.push(inView(targets, (el) => {
+      queue.push(el);
+      if (!queued) {
+        queued = true;
+        window.requestAnimationFrame(flush);
+      }
+    }, { amount: 0.2 }));
+  };
+
+  const startMotion = () => {
+    if (!root.classList.contains("sk-motion")) return;
+    if (!motionReady()) {
+      showEverything();
+      return;
+    }
+    root.classList.add("sk-motion-on");
+    try {
+      loadIn();
+      bindReveals(document);
+    } catch (error) {
+      showEverything();
+    }
+  };
+
   // ------------------------------------------------------ quantity stepper
   // The +/- buttons drive the real number input and fire the same events a
   // person typing would, so the booking script does all the maths.
@@ -129,6 +228,15 @@
       .querySelector("[data-sk-hero]")
       ?.classList.toggle("sk-hero--compact", Boolean(results.querySelector("#guest-booking-form")));
     bindWipes(results);
+    if (root.classList.contains("sk-motion-on")) {
+      revealStops.forEach((stop) => stop());
+      revealStops = [];
+      try {
+        bindReveals(results);
+      } catch (error) {
+        showEverything();
+      }
+    }
     syncSteppers(results);
     bindMobileTotal();
     const top = results.getBoundingClientRect().top;
@@ -142,6 +250,7 @@
   };
 
   const boot = () => {
+    startMotion();
     bindWipes(document);
     syncSteppers();
     bindMobileTotal();
