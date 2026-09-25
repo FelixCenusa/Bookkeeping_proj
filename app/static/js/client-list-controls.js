@@ -37,12 +37,12 @@
   };
 
   const createPageButtonClassName = (variant, isActive) => {
-    if (isActive) {
-      return "inline-flex min-w-10 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white";
+    if (variant === "customer") {
+      return isActive ? "kv-page kv-page-current" : "kv-page";
     }
 
-    if (variant === "customer") {
-      return "inline-flex min-w-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-pink-300 hover:text-rose-600";
+    if (isActive) {
+      return "inline-flex min-w-10 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white";
     }
 
     return "inline-flex min-w-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700";
@@ -98,7 +98,7 @@
       buildPageSequence(currentPage, totalPages).forEach((pageNumber) => {
         if (pageNumber === null) {
           const spacer = document.createElement("span");
-          spacer.className = "inline-flex min-w-10 items-center justify-center px-1 text-sm text-slate-400";
+          spacer.className = variant === "customer" ? "kv-page-gap" : "inline-flex min-w-10 items-center justify-center px-1 text-sm text-slate-400";
           spacer.textContent = "...";
           pagesWrap.appendChild(spacer);
           return;

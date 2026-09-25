@@ -1,4 +1,4 @@
-{% if page_obj and page_obj.total_items > 0 %}
+{% if page_obj and page_obj.total_items > 0 %}{% if role != 'admin' %}{% include "_customer_pagination.html" %}{% else %}
   <div class="mt-6 flex flex-col gap-4 rounded-[1.5rem] px-4 py-4 md:flex-row md:items-center md:justify-between {% if role == 'admin' %}border border-slate-200 bg-slate-50{% else %}border border-slate-200 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.1)]{% endif %}">
     <div class="text-sm text-slate-600">
       {% if role == 'admin' %}
@@ -84,4 +84,4 @@
       {% endif %}
     </div>
   </div>
-{% endif %}
+{% endif %}{% endif %}

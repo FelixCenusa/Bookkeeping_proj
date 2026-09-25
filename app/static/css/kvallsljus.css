@@ -1321,6 +1321,150 @@ html.kv-html {
   background: transparent;
 }
 
+/* ---------- Pagers, selects and empty states on customer lists ---------- */
+
+.kv-pager {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--kv-line);
+}
+
+.kv-select {
+  min-height: 40px;
+  padding: 0 2rem 0 0.75rem;
+  border: 1px solid var(--kv-line-strong);
+  border-radius: 8px;
+  background-color: var(--kv-dusk-2);
+  color: var(--kv-paper);
+  font-size: 0.875rem;
+}
+
+.kv-select:focus {
+  outline: none;
+  border-color: var(--kv-lamp);
+  box-shadow: 0 0 0 3px rgba(242, 179, 91, 0.3);
+}
+
+.kv-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--kv-line-strong);
+  border-radius: 999px;
+  color: var(--kv-paper);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a.kv-page:hover,
+  button.kv-page:hover:not(:disabled) {
+    border-color: var(--kv-lamp);
+    color: var(--kv-lamp-hi);
+  }
+}
+
+@media (max-width: 379px) {
+  .kv-page-step {
+    padding: 0 0.65rem;
+  }
+}
+
+.kv-page:disabled,
+.kv-page.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.kv-page-current {
+  border-color: var(--kv-paper);
+  background: var(--kv-paper);
+  color: var(--kv-ink);
+}
+
+.kv-page-gap {
+  display: inline-flex;
+  min-width: 1.5rem;
+  justify-content: center;
+  color: var(--kv-slate);
+}
+
+.kv-empty {
+  padding: 1.5rem 0;
+  color: #b9c2cf;
+}
+
+/* ---------- Profile and booking facts ---------- */
+
+.kv-facts dt {
+  font-size: 0.875rem;
+  color: var(--kv-slate);
+}
+
+.kv-facts dd {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1024px) {
+  .kv-facts > div {
+    padding-right: 1.5rem;
+  }
+
+  .kv-facts > div + div {
+    padding-left: 1.5rem;
+    border-left: 1px solid var(--kv-line);
+  }
+}
+
+.kv-detail-list > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--kv-line);
+}
+
+.kv-detail-list > div:first-child {
+  border-top: 1px solid var(--kv-line);
+}
+
+.kv-detail-list dt {
+  color: var(--kv-slate);
+}
+
+.kv-detail-list dd {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.kv-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.kv-loading {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  border-top: 1px solid var(--kv-line);
+  color: var(--kv-slate);
+}
+
+.kv-row-link td {
+  transition: background-color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .kv-row-link:hover td {
+    background: rgba(242, 236, 226, 0.04);
+  }
+}
+
 /* ---------- Async fragment host (Dina bokningar) ---------- */
 
 .kv-body [data-async-fragment][aria-busy="true"] {
