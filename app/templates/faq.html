@@ -21,7 +21,7 @@
   </script>
 {% endblock %}
 
-{% block content %}
+{% block content %}{% if is_admin_view %}
   <section class="relative overflow-hidden rounded-[2rem] border border-pink-100 bg-[linear-gradient(135deg,#fffdfd_0%,#ffffff_52%,#fbfffc_100%)] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.12)]">
     <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl"></div>
     <div class="absolute right-10 top-8 h-28 w-28 rounded-full bg-pink-200/25 blur-3xl"></div>
@@ -92,4 +92,42 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}{% import "_customer_festoon.html" as kv %}
+<div class="kv-page-top">{{ kv.festoon(sags=5, per_sag=3, depth=34, top=0, class_name='hidden md:block') }}{{ kv.festoon(sags=3, per_sag=3, depth=24, top=0, class_name='md:hidden') }}</div>
+<section class="kv-wrap pb-20 pt-24 md:pb-28 md:pt-32" aria-labelledby="kv-faq-title">
+  <div class="grid gap-12 lg:grid-cols-12 lg:gap-8">
+    <div class="lg:col-span-4">
+      <div class="lg:sticky lg:top-[calc(var(--kv-nav-h)+3rem)]">
+        <h1 id="kv-faq-title" class="kv-display text-[2.6rem] md:text-[3.5rem]">Vanliga frågor</h1>
+        <p class="mt-4 max-w-[36ch] text-lg leading-relaxed text-[#cfd6e0]">
+          Om bokning, leverans och montering, och vad som händer efter att du bokat.
+        </p>
+        <p class="mt-8 max-w-[36ch] text-[#9aa6b8]">
+          Hittar du inte svaret? Ring <a class="kv-link kv-num text-[#f2ece2]" href="tel:0730813710">073-081 37 10</a> eller mejla <a class="kv-link text-[#f2ece2]" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a>.
+        </p>
+      </div>
+    </div>
+
+    <div class="lg:col-span-7 lg:col-start-6">
+      <div class="border-t border-[rgba(242,236,226,0.16)]">
+        {% for item in faq_items %}
+          <details class="kv-faq border-b border-[rgba(242,236,226,0.16)]" id="fraga-{{ loop.index }}">
+            <summary class="flex min-h-[64px] items-center justify-between gap-6 py-5 text-left text-[1.15rem] font-semibold leading-snug md:text-[1.25rem]">
+              <span>{{ item.question }}</span>
+              <span class="kv-faq-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="kv-faq-body pb-7 pr-10">
+              <p class="max-w-[60ch] text-[1.05rem] leading-relaxed text-[#cfd6e0]">{{ item.answer }}</p>
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+
+      <div class="mt-14 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <p class="kv-display text-[1.6rem] leading-tight md:text-[1.9rem]">Vet du vilka datum det gäller?</p>
+        <a class="kv-btn kv-btn-lamp" href="{{ url_for('routes.home') }}#kv-dates">Se lediga tält</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}{% endblock %}

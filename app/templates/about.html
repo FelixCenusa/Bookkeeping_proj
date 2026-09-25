@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block content %}{% if is_admin_view %}
   <section class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
     <div class="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
       <div class="border-b border-slate-200 bg-slate-50 lg:border-b-0 lg:border-r">
@@ -94,4 +94,72 @@
       </div>
     </div>
   </footer>
-{% endblock %}
+{% else %}{% import "_customer_festoon.html" as kv %}
+<div class="kv-page-top">{{ kv.festoon(sags=5, per_sag=3, depth=34, top=0, class_name='hidden md:block') }}{{ kv.festoon(sags=3, per_sag=3, depth=24, top=0, class_name='md:hidden') }}</div>
+<section class="kv-wrap pb-16 pt-24 md:pb-24 md:pt-32" aria-labelledby="kv-about-title">
+  <div class="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
+    <div class="lg:col-span-5">
+      <h1 id="kv-about-title" class="kv-display text-[2.6rem] md:text-[3.5rem]">Om oss</h1>
+      <p class="mt-5 max-w-[34ch] text-xl leading-relaxed text-[#dfe4ec]">
+        KADA PartyTillbehör hjälper kunder att hyra tält och festutrustning för event, fester och arrangemang i Blekinge.
+      </p>
+    </div>
+    <figure class="kv-photo aspect-[16/10] lg:col-span-7">
+      <img
+        src="{{ url_for('static', filename='img/kvallsljus/kada-tent-founders.jpg') }}"
+        width="1600"
+        height="893"
+        alt="Två personer från KADA PartyTillbehör framför ett av företagets vita partytält i en trädgård"
+        decoding="async"
+        class="object-[50%_40%]"
+      >
+    </figure>
+  </div>
+</section>
+
+<section class="kv-wrap pb-16 md:pb-24" aria-labelledby="kv-about-how">
+  <div class="grid gap-8 border-t border-[rgba(242,236,226,0.16)] pt-10 md:pt-14 lg:grid-cols-12 lg:gap-8">
+    <h2 id="kv-about-how" class="kv-display text-[2rem] md:text-[2.5rem] lg:col-span-5">Vi gör uthyrning enklare</h2>
+    <div class="max-w-[62ch] space-y-5 text-[1.075rem] leading-relaxed text-[#cfd6e0] lg:col-span-7">
+      <p>
+        Vårt mål är att göra det enkelt att boka tält och annan festutrustning så att man slipper fylla upp förråden hemma med saker man sällan kommer till att använda.
+      </p>
+      <p>
+        Vi arbetar med ett bokningsflöde där datum, lagerstatus och priser håller ihop. Systemet kontrollerar bokningen i förväg, så när vi bekräftar den är förutsättningarna nästan alltid redan på plats.
+      </p>
+      <p>
+        Oavsett om du planerar en mindre privat tillställning eller ett större arrangemang är tanken densamma: tydlig information, enkelt att hitta samt boka och en smidigare väg från förfrågan till leverans.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="kv-wrap pb-20 md:pb-28" aria-labelledby="kv-about-offer">
+  <div class="grid gap-8 border-t border-[rgba(242,236,226,0.16)] pt-10 md:pt-14 lg:grid-cols-12 lg:gap-8">
+    <h2 id="kv-about-offer" class="kv-display text-[2rem] md:text-[2.5rem] lg:col-span-5">Det här hyr vi ut</h2>
+    <dl class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:col-span-7">
+      <div>
+        <dt class="font-semibold text-[#f8c98a]">Tält och festutrustning</dt>
+        <dd class="mt-2 leading-relaxed text-[#cfd6e0]">Uthyrning av tält och festutrustning för både mindre och större arrangemang.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-[#f8c98a]">Lediga datum direkt</dt>
+        <dd class="mt-2 leading-relaxed text-[#cfd6e0]">Tillgänglighet synlig direkt i bokningen så att du snabbt ser vad som går att reservera.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-[#f8c98a]">Leverans</dt>
+        <dd class="mt-2 leading-relaxed text-[#cfd6e0]">Leverans direkt till festen med pris baserat på adress och körsträcka.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-[#f8c98a]">Montering</dt>
+        <dd class="mt-2 leading-relaxed text-[#cfd6e0]">Montering och demontering för tält när du vill ha en mer komplett lösning.</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="mt-16 flex flex-col items-start gap-5 border-t border-[rgba(242,236,226,0.16)] pt-10 sm:flex-row sm:items-center sm:justify-between md:mt-20">
+    <p class="kv-display text-[1.6rem] leading-tight md:text-[1.9rem]">Vet du vilka datum det gäller?</p>
+    <a class="kv-btn kv-btn-lamp" href="{{ url_for('routes.home') }}#kv-dates">Se lediga tält</a>
+  </div>
+</section>
+{% endif %}{% endblock %}
