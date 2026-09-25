@@ -37,12 +37,12 @@
   };
 
   const createPageButtonClassName = (variant, isActive) => {
-    if (isActive) {
-      return "inline-flex min-w-10 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white";
+    if (variant === "customer") {
+      return isActive ? "pr-pagebtn is-active" : "pr-pagebtn";
     }
 
-    if (variant === "customer") {
-      return "inline-flex min-w-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-pink-300 hover:text-rose-600";
+    if (isActive) {
+      return "inline-flex min-w-10 items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white";
     }
 
     return "inline-flex min-w-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700";
