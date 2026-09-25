@@ -24,7 +24,7 @@
   }
 
   /* ---------- Motion: hero load-in, scroll reveals, festoon wave ---------- */
-  // Uses Motion (motion.dev) from the CDN when it loaded. Without it, or with reduced motion,
+  // Uses Motion (motion.dev, vendored in static/js/vendor) when it loaded. Without it, or with reduced motion,
   // everything is simply shown in its final state and the bulbs stay lit.
   const Motion = window.Motion;
   const motionReady = Boolean(Motion && Motion.animate && Motion.inView && Motion.stagger);
