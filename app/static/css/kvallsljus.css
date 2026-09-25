@@ -1288,37 +1288,49 @@ html.kv-html {
   font-weight: 500;
 }
 
-.kv-body .flatpickr-day {
+/* flatpickr's airbnb theme (loaded after this file by guest_home) draws a square grid with a red
+   "today" line. Here the days are round and unlined, so each rule carries .dayContainer to outrank
+   the theme's span.flatpickr-day selectors. */
+.kv-body .dayContainer span.flatpickr-day,
+.kv-body .dayContainer span.flatpickr-day.prevMonthDay,
+.kv-body .dayContainer span.flatpickr-day.nextMonthDay {
+  max-width: 39px;
+  margin-top: 2px;
+  border: 1px solid transparent;
+  border-radius: 999px !important; /* the theme sets 0 !important */
+  background: transparent;
   color: var(--kv-paper);
-  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
 }
 
-.kv-body .flatpickr-day:hover,
-.kv-body .flatpickr-day:focus {
-  background: rgba(242, 236, 226, 0.1);
+.kv-body .dayContainer span.flatpickr-day:hover,
+.kv-body .dayContainer span.flatpickr-day:focus {
   border-color: transparent;
+  background: rgba(242, 236, 226, 0.1);
+  color: var(--kv-paper);
 }
 
-.kv-body .flatpickr-day.today {
-  border-color: rgba(242, 179, 91, 0.6);
+.kv-body .dayContainer span.flatpickr-day.today,
+.kv-body .dayContainer span.flatpickr-day.today:hover {
+  border-color: rgba(242, 179, 91, 0.7);
 }
 
-.kv-body .flatpickr-day.selected,
-.kv-body .flatpickr-day.selected:hover,
-.kv-body .flatpickr-day.startRange,
-.kv-body .flatpickr-day.endRange {
-  background: var(--kv-lamp);
+.kv-body .dayContainer span.flatpickr-day.selected,
+.kv-body .dayContainer span.flatpickr-day.selected:hover,
+.kv-body .dayContainer span.flatpickr-day.selected:focus {
   border-color: var(--kv-lamp);
+  background: var(--kv-lamp);
   color: var(--kv-ink);
   font-weight: 600;
 }
 
-.kv-body .flatpickr-day.flatpickr-disabled,
-.kv-body .flatpickr-day.flatpickr-disabled:hover,
-.kv-body .flatpickr-day.prevMonthDay,
-.kv-body .flatpickr-day.nextMonthDay {
-  color: rgba(242, 236, 226, 0.26);
+.kv-body .dayContainer span.flatpickr-day.flatpickr-disabled,
+.kv-body .dayContainer span.flatpickr-day.flatpickr-disabled:hover,
+.kv-body .dayContainer span.flatpickr-day.prevMonthDay,
+.kv-body .dayContainer span.flatpickr-day.nextMonthDay {
+  border-color: transparent;
   background: transparent;
+  color: rgba(242, 236, 226, 0.26);
 }
 
 /* ---------- Pagers, selects and empty states on customer lists ---------- */
