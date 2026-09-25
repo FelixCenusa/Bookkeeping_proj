@@ -1,0 +1,1339 @@
+/*
+  Kvällsljus: the customer-facing theme for KADA PartyTillbehör.
+  Night ink surfaces, one warm lamp accent, paper for anything you fill in or keep.
+
+  Loaded only when not is_admin_view. Tailwind Play CDN still handles layout utilities;
+  this file owns tokens, typography and the few components Tailwind can't express well.
+
+  Rules that matter for the booking JS (docs/frontend-contract.md):
+  - Nothing here puts transform / filter / backdrop-filter / perspective / contain / will-change
+    on an ancestor of the fixed price and shared-stock popovers. Motion lives on leaf elements.
+  - Input background and border colours come from Tailwind arbitrary classes in the markup,
+    so the rose / amber / emerald state classes the JS toggles still win.
+
+  Radius rule: panels 6px, inputs 8px, buttons and chips fully rounded.
+*/
+
+:root {
+  --kv-night: #0e1522;
+  --kv-night-deep: #0a0f19;
+  --kv-dusk: #141d2e;
+  --kv-dusk-2: #1b2639;
+  --kv-line: rgba(242, 236, 226, 0.12);
+  --kv-line-strong: rgba(242, 236, 226, 0.24);
+  --kv-lamp: #f2b35b;
+  --kv-lamp-hi: #f8c98a;
+  --kv-lamp-soft: rgba(242, 179, 91, 0.06);
+  --kv-paper: #f2ece2;
+  --kv-paper-2: #e6ddcd;
+  --kv-slate: #9aa6b8;
+  --kv-ink: #141d2e;
+  --kv-ink-soft: #4a5468;
+  --kv-alert: #f39b8f;
+
+  --kv-display: "Gloock", "Georgia", serif;
+  --kv-sans: "Familjen Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --kv-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --kv-nav-h: 64px;
+  --kv-gutter: 20px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --kv-nav-h: 72px;
+    --kv-gutter: 40px;
+  }
+}
+
+/* ---------- Page ---------- */
+
+html.kv-html {
+  background: var(--kv-night);
+  color-scheme: dark;
+  scroll-padding-top: calc(var(--kv-nav-h) + 16px);
+}
+
+.kv-body {
+  background: var(--kv-night);
+  color: var(--kv-paper);
+  font-family: var(--kv-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  display: flex;
+  flex-direction: column;
+}
+
+.kv-body ::selection {
+  background: var(--kv-lamp);
+  color: var(--kv-ink);
+}
+
+.kv-body :focus-visible {
+  outline: 2px solid var(--kv-lamp);
+  outline-offset: 3px;
+}
+
+.kv-body .sortable-header-button:focus-visible {
+  outline-color: var(--kv-lamp);
+}
+
+.kv-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.kv-wrap {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: var(--kv-gutter);
+}
+
+.kv-display {
+  font-family: var(--kv-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.kv-num {
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.kv-muted {
+  color: var(--kv-slate);
+}
+
+.kv-link {
+  color: var(--kv-paper);
+  text-decoration: underline;
+  text-decoration-color: rgba(242, 179, 91, 0.55);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.kv-link:hover {
+  color: var(--kv-lamp-hi);
+  text-decoration-color: var(--kv-lamp);
+}
+
+.kv-rule {
+  border: 0;
+  border-top: 1px solid var(--kv-line);
+}
+
+/* ---------- Buttons ---------- */
+
+.kv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.975rem;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease,
+    transform 140ms var(--kv-ease);
+}
+
+.kv-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.kv-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.kv-btn-lamp {
+  background: var(--kv-lamp);
+  color: var(--kv-ink);
+  box-shadow: 0 10px 30px -14px rgba(242, 179, 91, 0.7);
+}
+
+.kv-btn-lamp:hover:not(:disabled) {
+  background: var(--kv-lamp-hi);
+}
+
+.kv-btn-ghost {
+  border: 1px solid var(--kv-line-strong);
+  color: var(--kv-paper);
+  background: transparent;
+}
+
+.kv-btn-ghost:hover {
+  border-color: var(--kv-lamp);
+  color: var(--kv-lamp-hi);
+}
+
+.kv-btn-ink {
+  background: var(--kv-ink);
+  color: var(--kv-paper);
+}
+
+.kv-btn-ink:hover:not(:disabled) {
+  background: #22304a;
+}
+
+/* ---------- Navigation ---------- */
+
+.kv-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--kv-nav-h);
+  background: var(--kv-night);
+  border-bottom: 1px solid var(--kv-line);
+}
+
+.kv-nav-inner {
+  display: flex;
+  align-items: flex-start;
+  height: 100%;
+  gap: 1.5rem;
+}
+
+/* The logo is navy on transparent, so it hangs on a paper plaque like a valance sign. */
+.kv-plaque {
+  --kv-scallop: 5px;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: calc(var(--kv-nav-h) + 10px);
+  padding: 0 14px calc(var(--kv-scallop) + 4px);
+  background: var(--kv-paper);
+  -webkit-mask:
+    radial-gradient(var(--kv-scallop) at 50% 0, #000 97%, transparent) 50% 100% / calc(2 * var(--kv-scallop)) var(--kv-scallop) repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - var(--kv-scallop)) no-repeat;
+  mask:
+    radial-gradient(var(--kv-scallop) at 50% 0, #000 97%, transparent) 50% 100% / calc(2 * var(--kv-scallop)) var(--kv-scallop) repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - var(--kv-scallop)) no-repeat;
+}
+
+.kv-plaque img {
+  height: 36px;
+  width: auto;
+}
+
+@media (min-width: 768px) {
+  .kv-plaque {
+    --kv-scallop: 6px;
+    padding-inline: 18px;
+  }
+
+  .kv-plaque img {
+    height: 44px;
+  }
+}
+
+.kv-navlink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: var(--kv-nav-h);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(242, 236, 226, 0.82);
+  transition: color 160ms ease;
+}
+
+.kv-navlink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  height: 1px;
+  background: var(--kv-lamp);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms var(--kv-ease);
+}
+
+.kv-navlink:hover,
+.kv-navlink[aria-current="page"] {
+  color: var(--kv-paper);
+}
+
+.kv-navlink[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .kv-navlink:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+.kv-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.kv-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.kv-menu-bars {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+}
+
+.kv-menu-bars::before,
+.kv-menu-bars::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 200ms var(--kv-ease), top 200ms var(--kv-ease);
+}
+
+.kv-menu-bars::before {
+  top: 0;
+}
+
+.kv-menu-bars::after {
+  top: 8.5px;
+}
+
+.kv-menu[open] .kv-menu-bars::before {
+  top: 4.25px;
+  transform: rotate(45deg);
+}
+
+.kv-menu[open] .kv-menu-bars::after {
+  top: 4.25px;
+  transform: rotate(-45deg);
+}
+
+.kv-menu-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--kv-dusk);
+  border-bottom: 1px solid var(--kv-line);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kv-menu[open] .kv-menu-panel {
+    animation: kv-drop 220ms var(--kv-ease);
+  }
+}
+
+@keyframes kv-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.kv-menu-link {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--kv-line);
+}
+
+.kv-menu-link[aria-current="page"] {
+  color: var(--kv-lamp-hi);
+}
+
+/* ---------- Festoon: the signature moment ---------- */
+/* A string of bulbs on a sagging wire. Lights up bulb by bulb once per visit, then stays lit. */
+
+.kv-festoon {
+  position: absolute;
+  inset: 0 0 auto 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.kv-festoon-wire {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.kv-festoon-wire path {
+  fill: none;
+  stroke: rgba(236, 214, 178, 0.3);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.kv-festoon.is-on-light .kv-festoon-wire path {
+  stroke: rgba(242, 236, 226, 0.35);
+}
+
+.kv-bulb {
+  position: absolute;
+  width: 12px;
+  height: 20px;
+  margin-left: -6px;
+}
+
+/* socket */
+.kv-bulb::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px 1px 2px 2px;
+  background: #06090f;
+}
+
+/* glass, unlit */
+.kv-bulb > i {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 12px;
+  height: 14px;
+  border-radius: 50% 50% 48% 48% / 42% 42% 58% 58%;
+  background: rgba(242, 236, 226, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(242, 236, 226, 0.22);
+}
+
+/* glass, lit, and its glow; both animate opacity only */
+.kv-bulb > i::before,
+.kv-bulb > i::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.kv-bulb > i::before {
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 38%, #fff4dc 0 22%, var(--kv-lamp-hi) 45%, var(--kv-lamp) 100%);
+}
+
+.kv-bulb > i::after {
+  left: 50%;
+  top: 50%;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  background: radial-gradient(circle, rgba(248, 201, 138, 0.42) 0%, rgba(242, 179, 91, 0.14) 32%, transparent 68%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.kv-lit) .kv-bulb > i::before,
+  html:not(.kv-lit) .kv-bulb > i::after {
+    animation: kv-bulb-on 820ms var(--kv-ease) both;
+    animation-delay: calc(360ms + var(--i, 0) * 105ms);
+  }
+}
+
+@keyframes kv-bulb-on {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.95;
+  }
+  34% {
+    opacity: 0.35;
+  }
+  52% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ---------- Hero ---------- */
+
+.kv-hero {
+  --kv-band: min(88vw, 440px);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kv-night);
+}
+
+/* Phones: the photo is a band at the top (sky, festoon, the lit tent); the text follows below it.
+   Wider screens: the photo fills the hero, headline in the sky, date search docked at the bottom. */
+.kv-hero-media,
+.kv-hero-scrim {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--kv-band);
+}
+
+.kv-hero-media {
+  z-index: -2;
+  background: linear-gradient(180deg, #070b1c 0%, #0c1330 60%, #121b2b 100%);
+}
+
+.kv-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 76% 100%;
+}
+
+.kv-hero-scrim {
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(10, 15, 25, 0.5) 0%, rgba(10, 15, 25, 0) 24%),
+    linear-gradient(0deg, var(--kv-night) 0%, rgba(14, 21, 34, 0.5) 10%, rgba(14, 21, 34, 0) 24%);
+}
+
+.kv-hero-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(var(--kv-band) - 2rem);
+  padding-bottom: 3rem;
+}
+
+.kv-hero-dock {
+  margin-top: 2rem;
+}
+
+@media (min-width: 768px) {
+  .kv-hero {
+    --kv-band: min(58vw, 560px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kv-hero-media,
+  .kv-hero-scrim {
+    inset: 0;
+    height: auto;
+  }
+
+  .kv-hero-media img {
+    object-position: 74% 100%;
+  }
+
+  .kv-hero-scrim {
+    background:
+      linear-gradient(180deg, rgba(10, 15, 25, 0.55) 0%, rgba(10, 15, 25, 0) 22%),
+      linear-gradient(0deg, var(--kv-night) 0%, rgba(14, 21, 34, 0.6) 9%, rgba(14, 21, 34, 0) 22%),
+      linear-gradient(90deg, rgba(10, 15, 25, 0.6) 0%, rgba(10, 15, 25, 0.2) 38%, rgba(10, 15, 25, 0) 60%);
+  }
+
+  .kv-hero-body {
+    min-height: max(min(calc(100svh - var(--kv-nav-h)), 880px), 720px);
+    padding-top: 8.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .kv-hero-dock {
+    margin-top: auto;
+  }
+
+  .kv-hero-body > div:first-child {
+    padding-bottom: 3rem;
+  }
+}
+
+/* After a dated search the hero steps back: short band, small title, date search. */
+.kv-hero--compact {
+  --kv-band: min(52vw, 240px);
+}
+
+@media (min-width: 1024px) {
+  .kv-hero--compact .kv-hero-body {
+    min-height: 0;
+    padding-top: 7.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .kv-hero--compact .kv-hero-body > div:first-child {
+    padding-bottom: 0;
+  }
+
+  .kv-hero--compact .kv-hero-dock {
+    margin-top: 1.75rem;
+  }
+
+  .kv-hero--compact .kv-hero-media img {
+    object-position: 74% 88%;
+  }
+}
+
+/* ---------- Surfaces ---------- */
+
+.kv-panel {
+  background: var(--kv-dusk);
+  border: 1px solid var(--kv-line);
+  border-radius: 6px;
+}
+
+.kv-field-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--kv-paper);
+  margin-bottom: 0.4rem;
+}
+
+.kv-field-help {
+  font-size: 0.8125rem;
+  color: var(--kv-slate);
+}
+
+/* Shared shape for text inputs. Colours come from Tailwind classes in the markup. */
+.kv-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.95rem;
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: solid;
+  color: var(--kv-ink);
+  font-size: 1rem;
+  line-height: 1.4;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.kv-input::placeholder {
+  color: #5e6474;
+  opacity: 1;
+}
+
+.kv-input:focus {
+  outline: none;
+}
+
+.kv-input[readonly] {
+  cursor: pointer;
+}
+
+.kv-check {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin: 0;
+  border: 1.5px solid rgba(242, 236, 226, 0.6);
+  border-radius: 5px;
+  background: transparent center / 15px 15px no-repeat;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.kv-check:checked {
+  border-color: var(--kv-lamp);
+  background-color: var(--kv-lamp);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%23141d2e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.kv-check:focus-visible {
+  outline: 2px solid var(--kv-lamp);
+  outline-offset: 3px;
+}
+
+.kv-check:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Status chips (booking status). Filled pill, sentence case. */
+.kv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.kv-chip-pending {
+  background: rgba(242, 179, 91, 0.16);
+  color: var(--kv-lamp-hi);
+}
+
+.kv-chip-confirmed {
+  background: rgba(142, 208, 170, 0.14);
+  color: #a9e2c0;
+}
+
+.kv-chip-cancelled {
+  background: rgba(243, 155, 143, 0.14);
+  color: #f6b3aa;
+}
+
+/* ---------- Menu-style price list (the catalog without dates) ---------- */
+
+.kv-menu-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 1rem;
+  align-items: baseline;
+}
+
+.kv-leader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.kv-leader::after {
+  content: "";
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  border-bottom: 1px dotted rgba(242, 236, 226, 0.34);
+  transform: translateY(-0.3em);
+}
+
+.kv-price-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--kv-slate);
+  transition: color 160ms ease;
+}
+
+.kv-price-toggle:hover,
+.kv-price-toggle[aria-expanded="true"] {
+  color: var(--kv-lamp-hi);
+}
+
+.kv-price-toggle-caret {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 180ms var(--kv-ease);
+}
+
+.kv-price-toggle[aria-expanded="true"] .kv-price-toggle-caret {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+/* The popover positions itself (fixed) from JS; min-width lets it outgrow a narrow toggle. */
+.kv-popover {
+  min-width: 17rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--kv-paper);
+  color: var(--kv-ink);
+  border-radius: 6px;
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(20, 29, 46, 0.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kv-popover:not(.hidden) {
+    transition: opacity 160ms ease;
+  }
+
+  @starting-style {
+    .kv-popover:not(.hidden) {
+      opacity: 0;
+    }
+  }
+}
+
+/* ---------- Steps (how booking works) ---------- */
+
+.kv-steps {
+  position: relative;
+}
+
+.kv-step-bulb {
+  position: relative;
+  width: 14px;
+  height: 18px;
+}
+
+.kv-step-bulb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 48% 48% / 42% 42% 58% 58%;
+  background: radial-gradient(circle at 50% 38%, #fff4dc 0 22%, var(--kv-lamp-hi) 45%, var(--kv-lamp) 100%);
+  box-shadow: 0 0 22px 4px rgba(242, 179, 91, 0.32);
+}
+
+/* ---------- Booking flow ---------- */
+
+.kv-step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+.kv-step-no {
+  font-family: var(--kv-display);
+  font-size: 2.6rem;
+  line-height: 0.8;
+  color: var(--kv-lamp);
+  font-variant-numeric: lining-nums;
+}
+
+.kv-datesbar {
+  position: sticky;
+  top: var(--kv-nav-h);
+  z-index: 30;
+  background: var(--kv-dusk);
+  border-bottom: 1px solid var(--kv-line);
+}
+
+/* Desktop item table */
+.kv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.kv-table thead th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--kv-slate);
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--kv-line-strong);
+  white-space: nowrap;
+}
+
+.kv-table tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--kv-line);
+  vertical-align: middle;
+}
+
+.kv-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.kv-row-off {
+  color: rgba(242, 236, 226, 0.5);
+}
+
+/* Quantity stepper around the contract's number input */
+.kv-qty {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 999px;
+  background: var(--kv-dusk-2);
+  border: 1px solid var(--kv-line-strong);
+}
+
+.kv-qty-btn {
+  display: none;
+  width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--kv-paper);
+  border-radius: 999px;
+  transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--kv-ease);
+}
+
+.kv-js .kv-qty-btn {
+  display: inline-flex;
+}
+
+.kv-qty-btn:hover:not(:disabled) {
+  background: rgba(242, 179, 91, 0.16);
+  color: var(--kv-lamp-hi);
+}
+
+.kv-qty-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.kv-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.kv-qty input {
+  width: 3.25rem;
+  min-height: 44px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--kv-paper);
+  background: transparent;
+  border: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.kv-qty input::-webkit-outer-spin-button,
+.kv-qty input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.kv-qty input:focus-visible {
+  outline: 2px solid var(--kv-lamp);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.kv-qty input:disabled {
+  color: rgba(242, 236, 226, 0.45);
+  cursor: not-allowed;
+}
+
+.kv-qty.has-qty {
+  border-color: var(--kv-lamp);
+  background: var(--kv-lamp-soft);
+}
+
+/* Service toggles */
+.kv-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1.1rem 1.1rem;
+  border: 1px solid var(--kv-line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.kv-option:hover {
+  border-color: var(--kv-line-strong);
+}
+
+.kv-option:has(input:checked) {
+  border-color: rgba(242, 179, 91, 0.7);
+  background: var(--kv-lamp-soft);
+}
+
+.kv-option:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.kv-option:has(input:disabled) .kv-option-title {
+  color: rgba(242, 236, 226, 0.6);
+}
+
+/* ---------- Receipt (Steg 5 and booking detail) ---------- */
+
+.kv-receipt-wrap {
+  position: relative;
+}
+
+.kv-receipt {
+  --kv-tooth: 9px;
+  position: relative;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 228, 0.9), rgba(242, 236, 226, 0) 140px),
+    var(--kv-paper);
+  color: var(--kv-ink);
+  padding-bottom: calc(var(--kv-tooth) + 1.5rem);
+  /* torn-paper teeth along the bottom edge */
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--kv-tooth)) 100%;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--kv-tooth)) 100%;
+  border-radius: 6px 6px 0 0;
+}
+
+.kv-receipt-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.kv-receipt-line > :first-child {
+  color: var(--kv-ink-soft);
+}
+
+.kv-receipt-line > :last-child {
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.kv-receipt-rule {
+  border: 0;
+  border-top: 1px dashed rgba(20, 29, 46, 0.3);
+}
+
+.kv-receipt .kv-total-value {
+  font-family: var(--kv-display);
+  font-size: 2.1rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  border-radius: 4px;
+  transition: background-color 700ms ease;
+}
+
+.kv-receipt .kv-total-value.is-bumped {
+  background-color: rgba(242, 179, 91, 0.45);
+  transition: none;
+}
+
+.kv-receipt a {
+  color: var(--kv-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(20, 29, 46, 0.4);
+}
+
+.kv-receipt .kv-check {
+  border-color: rgba(20, 29, 46, 0.6);
+}
+
+.kv-receipt .kv-check:checked {
+  border-color: var(--kv-ink);
+  background-color: var(--kv-ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%23f2ece2' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.kv-receipt .kv-check:focus-visible {
+  outline-color: var(--kv-ink);
+}
+
+/* The shared table sorter puts its button across the whole cell; keep label and arrow together. */
+.kv-body .kv-table .sortable-header-button {
+  width: auto;
+  justify-content: flex-start;
+  gap: 0.4rem;
+}
+
+.kv-body .kv-table .sortable-header-indicator {
+  color: var(--kv-slate);
+  opacity: 1;
+}
+
+.kv-body .kv-table [aria-sort="ascending"] .sortable-header-indicator,
+.kv-body .kv-table [aria-sort="descending"] .sortable-header-indicator {
+  color: var(--kv-lamp);
+}
+
+/* Mobile total bar (a link to Steg 5, never a submit) */
+.kv-totalbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  background: var(--kv-paper);
+  color: var(--kv-ink);
+  box-shadow: 0 -18px 40px -20px rgba(0, 0, 0, 0.8);
+  transition: opacity 200ms ease, visibility 200ms;
+}
+
+.kv-totalbar.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (min-width: 1024px) {
+  .kv-totalbar {
+    display: none;
+  }
+}
+
+.kv-has-totalbar {
+  padding-bottom: 76px;
+}
+
+@media (min-width: 1024px) {
+  .kv-has-totalbar {
+    padding-bottom: 0;
+  }
+}
+
+/* ---------- FAQ ---------- */
+
+.kv-faq > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.kv-faq > summary::-webkit-details-marker {
+  display: none;
+}
+
+.kv-faq-icon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.kv-faq-icon::before,
+.kv-faq-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6.25px;
+  width: 14px;
+  height: 1.5px;
+  background: var(--kv-lamp);
+  transition: transform 220ms var(--kv-ease);
+}
+
+.kv-faq-icon::after {
+  transform: rotate(90deg);
+}
+
+.kv-faq[open] .kv-faq-icon::after {
+  transform: rotate(0deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kv-faq[open] .kv-faq-body {
+    animation: kv-fade 260ms var(--kv-ease);
+  }
+}
+
+@keyframes kv-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Photo frames ---------- */
+
+.kv-photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--kv-dusk);
+}
+
+.kv-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Full-bleed photo band with the heading laid over its dark side (wide screens only). */
+.kv-banner {
+  position: relative;
+}
+
+.kv-banner-media {
+  position: relative;
+  height: clamp(240px, 62vw, 420px);
+  overflow: hidden;
+  background: var(--kv-dusk);
+}
+
+.kv-banner-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 58%;
+}
+
+.kv-banner-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--kv-night) 0%, rgba(14, 21, 34, 0) 38%);
+}
+
+.kv-banner-text {
+  position: relative;
+  margin-top: -2.25rem;
+}
+
+@media (min-width: 1024px) {
+  .kv-banner-media {
+    height: clamp(420px, 40vw, 600px);
+  }
+
+  .kv-banner-media::after {
+    background:
+      linear-gradient(90deg, rgba(14, 21, 34, 0.94) 0%, rgba(14, 21, 34, 0.7) 30%, rgba(14, 21, 34, 0) 58%),
+      linear-gradient(0deg, var(--kv-night) 0%, rgba(14, 21, 34, 0) 30%);
+  }
+
+  .kv-banner-media img {
+    object-position: 50% 14%;
+  }
+
+  .kv-banner-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 3.5rem;
+    margin-top: 0;
+  }
+}
+
+/* The multiplication sign in Gloock is tiny; set it in the sans at a readable size. */
+.kv-times {
+  display: inline-block;
+  margin: 0 0.06em;
+  font-family: var(--kv-sans);
+  font-size: 0.62em;
+  font-weight: 400;
+  color: var(--kv-slate);
+  vertical-align: 0.14em;
+}
+
+/* ---------- Footer ---------- */
+
+.kv-footer {
+  position: relative;
+  background: var(--kv-night-deep);
+  border-top: 1px solid var(--kv-line);
+}
+
+.kv-footer a:not(.kv-plaque) {
+  transition: color 160ms ease;
+}
+
+.kv-footer a:not(.kv-plaque):hover {
+  color: var(--kv-lamp-hi);
+}
+
+/* ---------- Flatpickr on the night palette ---------- */
+
+.kv-body .flatpickr-calendar {
+  background: var(--kv-dusk);
+  border: 1px solid var(--kv-line-strong);
+  border-radius: 8px;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  font-family: var(--kv-sans);
+}
+
+.kv-body .flatpickr-calendar.arrowTop::before,
+.kv-body .flatpickr-calendar.arrowTop::after {
+  border-bottom-color: var(--kv-dusk);
+}
+
+.kv-body .flatpickr-calendar.arrowBottom::before,
+.kv-body .flatpickr-calendar.arrowBottom::after {
+  border-top-color: var(--kv-dusk);
+}
+
+.kv-body .flatpickr-months .flatpickr-month,
+.kv-body .flatpickr-current-month,
+.kv-body .flatpickr-months .flatpickr-prev-month,
+.kv-body .flatpickr-months .flatpickr-next-month {
+  color: var(--kv-paper);
+  fill: var(--kv-paper);
+}
+
+.kv-body .flatpickr-months .flatpickr-prev-month:hover,
+.kv-body .flatpickr-months .flatpickr-next-month:hover {
+  color: var(--kv-lamp);
+}
+
+.kv-body .flatpickr-current-month .flatpickr-monthDropdown-months,
+.kv-body .flatpickr-current-month input.cur-year {
+  color: var(--kv-paper);
+  font-weight: 600;
+}
+
+.kv-body .flatpickr-current-month .flatpickr-monthDropdown-months option {
+  background: var(--kv-dusk);
+}
+
+.kv-body .numInputWrapper span.arrowUp::after {
+  border-bottom-color: var(--kv-paper);
+}
+
+.kv-body .numInputWrapper span.arrowDown::after {
+  border-top-color: var(--kv-paper);
+}
+
+.kv-body span.flatpickr-weekday {
+  color: var(--kv-slate);
+  font-weight: 500;
+}
+
+.kv-body .flatpickr-day {
+  color: var(--kv-paper);
+  border-radius: 999px;
+}
+
+.kv-body .flatpickr-day:hover,
+.kv-body .flatpickr-day:focus {
+  background: rgba(242, 236, 226, 0.1);
+  border-color: transparent;
+}
+
+.kv-body .flatpickr-day.today {
+  border-color: rgba(242, 179, 91, 0.6);
+}
+
+.kv-body .flatpickr-day.selected,
+.kv-body .flatpickr-day.selected:hover,
+.kv-body .flatpickr-day.startRange,
+.kv-body .flatpickr-day.endRange {
+  background: var(--kv-lamp);
+  border-color: var(--kv-lamp);
+  color: var(--kv-ink);
+  font-weight: 600;
+}
+
+.kv-body .flatpickr-day.flatpickr-disabled,
+.kv-body .flatpickr-day.flatpickr-disabled:hover,
+.kv-body .flatpickr-day.prevMonthDay,
+.kv-body .flatpickr-day.nextMonthDay {
+  color: rgba(242, 236, 226, 0.26);
+  background: transparent;
+}
+
+/* ---------- Async fragment host (Dina bokningar) ---------- */
+
+.kv-body [data-async-fragment][aria-busy="true"] {
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+
+/* ---------- Utilities ---------- */
+
+.kv-no-scrollbar {
+  scrollbar-width: none;
+}
+
+.kv-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kv-body *,
+  .kv-body *::before,
+  .kv-body *::after {
+    scroll-behavior: auto !important;
+  }
+}

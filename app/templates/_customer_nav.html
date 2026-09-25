@@ -1,0 +1,57 @@
+{% set endpoint = request.endpoint or '' %}
+{% set signed_in = session.get('user_id') %}
+{% set nav_links = [
+  (url_for('routes.home'), 'Boka', endpoint == 'routes.home'),
+  (url_for('routes.faq'), 'Vanliga frågor', endpoint == 'routes.faq'),
+  (url_for('routes.about'), 'Om oss', endpoint == 'routes.about'),
+] %}
+<nav class="kv-nav" aria-label="Huvudmeny">
+  <div class="kv-wrap kv-nav-inner">
+    <a class="kv-plaque" href="{{ url_for('routes.home') }}" aria-label="KADA PartyTillbehör, till startsidan">
+      <img src="{{ customer_logo_url }}" alt="KADA PartyTillbehör" width="1524" height="319">
+    </a>
+
+    <div class="ml-4 hidden items-center gap-8 lg:flex">
+      {% for href, label, active in nav_links %}
+        <a class="kv-navlink" href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="ml-auto hidden h-full items-center gap-6 lg:flex">
+      {% if signed_in %}
+        <a class="kv-navlink" href="{{ url_for('routes.customers') }}"{% if endpoint in ('routes.customer_detail', 'routes.booking_detail') %} aria-current="page"{% endif %}>Min profil</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+          <button class="kv-btn kv-btn-ghost min-h-[40px] px-5 text-sm" type="submit">Logga ut</button>
+        </form>
+      {% else %}
+        <a class="kv-navlink" href="{{ url_for('auth.login_form') }}"{% if endpoint == 'auth.login_form' %} aria-current="page"{% endif %}>Logga in</a>
+        <a class="kv-btn kv-btn-ghost min-h-[40px] px-5 text-sm" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+      {% endif %}
+    </div>
+
+    <details class="kv-menu ml-auto self-center lg:hidden" data-kv-menu>
+      <summary data-nav-toggle class="inline-flex min-h-[44px] items-center gap-3 rounded-full border border-[rgba(242,236,226,0.24)] px-4 text-sm font-semibold">
+        <span class="kv-menu-bars" aria-hidden="true"></span>
+        <span>Meny</span>
+      </summary>
+      <div class="kv-menu-panel">
+        <div class="kv-wrap pb-6 pt-2">
+          {% for href, label, active in nav_links %}
+            <a class="kv-menu-link" href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+          {% endfor %}
+          {% if signed_in %}
+            <a class="kv-menu-link" href="{{ url_for('routes.customers') }}">Min profil</a>
+            <form method="post" action="{{ url_for('auth.logout') }}" class="m-0 mt-5">
+              <button class="kv-btn kv-btn-ghost w-full" type="submit">Logga ut</button>
+            </form>
+          {% else %}
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <a class="kv-btn kv-btn-ghost" href="{{ url_for('auth.login_form') }}">Logga in</a>
+              <a class="kv-btn kv-btn-lamp" href="{{ url_for('auth.register_form') }}">Skapa konto</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </details>
+  </div>
+</nav>

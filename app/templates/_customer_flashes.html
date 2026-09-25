@@ -1,0 +1,13 @@
+<div class="kv-wrap pt-6">
+  <div class="space-y-3">
+    {% for category, message in messages %}
+      <div
+        class="flex items-start gap-3 rounded-[6px] border px-4 py-3.5 text-[0.95rem] leading-snug {% if category == 'success' %}border-[rgba(242,179,91,0.45)] bg-[rgba(242,179,91,0.1)] text-[#f2ece2]{% else %}border-[rgba(243,155,143,0.5)] bg-[rgba(243,155,143,0.1)] text-[#f7d3cd]{% endif %}"
+        role="{% if category == 'success' %}status{% else %}alert{% endif %}"
+      >
+        <span class="mt-[0.4em] inline-block h-2 w-2 flex-none rounded-full {% if category == 'success' %}bg-[#f2b35b]{% else %}bg-[#f39b8f]{% endif %}" aria-hidden="true"></span>
+        <span>{{ message }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>

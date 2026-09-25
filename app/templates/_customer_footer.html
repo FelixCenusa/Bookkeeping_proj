@@ -1,0 +1,38 @@
+{% set terms_pdf_url = url_for('static', filename='pdf/Allmänna-hyresvillkor-tältuthyrning.pdf') %}
+<footer class="kv-footer">
+  <div class="kv-wrap grid gap-12 pb-10 pt-0 md:grid-cols-12 md:gap-8 md:pb-14">
+    <div class="md:col-span-5">
+      <a class="kv-plaque" href="{{ url_for('routes.home') }}" aria-label="KADA PartyTillbehör, till startsidan">
+        <img src="{{ customer_logo_url }}" alt="KADA PartyTillbehör" width="1524" height="319" loading="lazy" decoding="async">
+      </a>
+      <p class="mt-8 max-w-[34ch] text-[1.05rem] leading-relaxed text-[#cfd6e0]">
+        Tält, bord, stolar och ljusslingor att hyra, med leverans och montering i Karlshamn och övriga Blekinge.
+      </p>
+    </div>
+
+    <div class="md:col-span-4 md:pt-24">
+      <h2 class="text-sm font-semibold text-[#9aa6b8]">Kontakt</h2>
+      <address class="mt-4 space-y-3 not-italic">
+        <p class="leading-relaxed">KADA PartyTillbehör<br>Östersjövägen 45<br>374 31 Karlshamn</p>
+        <p><a class="kv-link" href="mailto:kadaparty@kadaparty.se">kadaparty@kadaparty.se</a></p>
+        <p><a class="kv-link kv-num" href="tel:0730813710">073-081 37 10</a></p>
+      </address>
+    </div>
+
+    <div class="md:col-span-3 md:pt-24">
+      <h2 class="text-sm font-semibold text-[#9aa6b8]">Hitta</h2>
+      <ul class="mt-4 space-y-3">
+        <li><a href="{{ url_for('routes.home') }}">Boka</a></li>
+        <li><a href="{{ url_for('routes.faq') }}">Vanliga frågor</a></li>
+        <li><a href="{{ url_for('routes.about') }}">Om oss</a></li>
+        <li><a href="{{ terms_pdf_url }}" target="_blank" rel="noopener noreferrer">Hyresvillkor (PDF)</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[rgba(242,236,226,0.12)]">
+    <div class="kv-wrap flex flex-col gap-2 py-6 text-sm text-[#9aa6b8] sm:flex-row sm:justify-between">
+      <p>KADA PartyTillbehör, Karlshamn</p>
+      <p>Leverans i Karlshamn och övriga Blekinge</p>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,23 @@
+{#
+  A festoon: bulbs hanging from a wire that sags between posts.
+  Wire and bulbs share one geometry: a quadratic curve per sag, so a bulb at fraction t of a sag
+  sits at y = top + depth * 4t(1-t). The SVG stretches horizontally (preserveAspectRatio="none")
+  while the y axis stays in pixels, which keeps the bulbs on the wire at every width.
+  Purely decorative: aria-hidden, pointer-events none.
+#}
+{% macro festoon(sags=5, per_sag=3, depth=40, top=6, class_name='', start_index=0) -%}
+{% set height = top + depth + 26 %}
+<div class="kv-festoon {{ class_name }}" aria-hidden="true" style="height: {{ height }}px">
+  <svg class="kv-festoon-wire" viewBox="0 0 100 {{ height }}" preserveAspectRatio="none" height="{{ height }}" focusable="false">
+    <path d="M0 {{ top }}{% for s in range(sags) %}{% set x0 = s * 100 / sags %}{% set x1 = (s + 1) * 100 / sags %} Q{{ '%.3f'|format((x0 + x1) / 2) }} {{ top + 2 * depth }} {{ '%.3f'|format(x1) }} {{ top }}{% endfor %}"/>
+  </svg>
+  {% for s in range(sags) %}
+    {% for j in range(1, per_sag + 1) %}
+      {% set t = j / (per_sag + 1) %}
+      {% set x = (s + t) * 100 / sags %}
+      {% set y = top + depth * 4 * t * (1 - t) %}
+      <span class="kv-bulb" style="left: {{ '%.3f'|format(x) }}%; top: {{ '%.1f'|format(y - 1) }}px; --i: {{ start_index + s * per_sag + j - 1 }}"><i></i></span>
+    {% endfor %}
+  {% endfor %}
+</div>
+{%- endmacro %}

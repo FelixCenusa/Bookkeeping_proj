@@ -1,0 +1,18 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Gloock&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/kvallsljus.css') }}">
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.add("kv-js");
+      // The festoon lights up once per visit; later pages show it already lit.
+      try {
+        if (sessionStorage.getItem("kv-lit")) {
+          root.classList.add("kv-lit");
+        } else {
+          sessionStorage.setItem("kv-lit", "1");
+        }
+      } catch (error) {}
+    })();
+  </script>
