@@ -32,6 +32,15 @@
     });
   }
 
+  /* ---------- FAQ: a link to /faq#fraga-3 opens that answer ---------- */
+  const openFromHash = () => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    const target = id ? document.getElementById(id) : null;
+    if (target instanceof HTMLDetailsElement) target.open = true;
+  };
+  openFromHash();
+  window.addEventListener("hashchange", openFromHash);
+
   /* ---------- Quantity steppers around [data-booking-qty] ---------- */
   const readInt = (value, fallback) => {
     const parsed = Number.parseInt(value, 10);

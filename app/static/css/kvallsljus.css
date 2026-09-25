@@ -367,6 +367,7 @@ html.kv-html {
 .kv-festoon {
   position: absolute;
   inset: 0 0 auto 0;
+  overflow-x: clip;
   pointer-events: none;
   z-index: 2;
 }
@@ -1073,6 +1074,13 @@ html.kv-html {
   .kv-has-totalbar {
     padding-bottom: 0;
   }
+}
+
+/* Inner pages: a short festoon hanging from the nav. */
+.kv-page-top {
+  position: relative;
+  height: 0;
+  z-index: 2;
 }
 
 /* ---------- FAQ ---------- */

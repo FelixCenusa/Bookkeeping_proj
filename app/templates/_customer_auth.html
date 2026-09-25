@@ -1,0 +1,23 @@
+{# Shared frame for the customer account pages: text and form on the left, an evening photo on the right. #}
+{% set kv_auth_input = "kv-input border-[#d9cfbe] bg-[#f2ece2] focus:border-[#f2b35b] focus:ring-4 focus:ring-[#f2b35b]/40" %}
+
+{% macro auth_shell(title, photo='long-table-string-lights.jpg', photo_alt='Ett dukat långbord under ljusslingor en sommarkväll') -%}
+<section class="kv-wrap py-12 md:py-20">
+  <div class="grid gap-12 lg:grid-cols-12 lg:gap-8">
+    <div class="lg:col-span-6 xl:col-span-5">
+      <h1 class="kv-display text-[2.5rem] md:text-[3.25rem]">{{ title }}</h1>
+      {{ caller() }}
+    </div>
+    <figure class="kv-photo hidden aspect-[4/5] lg:col-span-5 lg:col-start-8 lg:block">
+      <img
+        src="{{ url_for('static', filename='img/kvallsljus/' ~ photo) }}"
+        width="1000"
+        height="1500"
+        alt="{{ photo_alt }}"
+        loading="lazy"
+        decoding="async"
+      >
+    </figure>
+  </div>
+</section>
+{%- endmacro %}

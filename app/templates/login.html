@@ -1,54 +1,31 @@
 {% extends "base.html" %}
+{% import "_customer_auth.html" as auth %}
 {% block content %}
-<section class="mx-auto max-w-5xl">
-  <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-    <div class="relative overflow-hidden rounded-[2rem] border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf3_0%,#f6fff8_38%,#ffffff_100%)] shadow-[0_28px_70px_-42px_rgba(34,197,94,0.22)]">
-      <div class="absolute -left-10 top-0 h-36 w-36 rounded-full bg-emerald-300/35 blur-3xl"></div>
-      <div class="absolute right-6 top-6 h-28 w-28 rounded-full bg-emerald-200/30 blur-3xl"></div>
-      <div class="relative px-6 py-8 md:px-8">
-        <div class="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-rose-500">
-          V&auml;lkommen tillbaka
-        </div>
-        <h1 class="mt-5 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Logga in</h1>
-        <p class="mt-3 max-w-xl text-sm leading-6 text-slate-700 md:text-base">
-          F&aring; &aring;tkomst till dina bokningar, samla leveransuppgifter p&aring; ett st&auml;lle och skicka nya bokningsf&ouml;rfr&aring;gningar i samma fl&ouml;de.
-        </p>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-2xl border border-emerald-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-emerald-600">Bokningar</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">Se dina v&auml;ntande och bekr&auml;ftade bokningar p&aring; ett st&auml;lle.</div>
-          </div>
-          <div class="rounded-2xl border border-pink-100 bg-white/85 p-4">
-            <div class="text-xs font-medium uppercase tracking-[0.18em] text-rose-400">Leverans</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">&Aring;teranv&auml;nd dina sparade kontakt- och adressuppgifter snabbare.</div>
-          </div>
-        </div>
+{% call auth.auth_shell("Logga in") %}
+  <p class="mt-4 max-w-[40ch] text-lg leading-relaxed text-[#cfd6e0]">
+    Se dina bokningar och boka igen med dina sparade uppgifter.
+  </p>
+
+  <form method="post" class="mt-10 max-w-[28rem] space-y-5">
+    <div>
+      <label class="kv-field-label" for="email">E-post</label>
+      <input id="email" name="email" type="email" required autocomplete="email" class="{{ auth.kv_auth_input }}">
+    </div>
+
+    <div>
+      <div class="flex items-baseline justify-between gap-4">
+        <label class="kv-field-label" for="password">Lösenord</label>
+        <a href="{{ url_for('auth.forgot_password_form') }}" class="kv-link text-sm">Glömt lösenordet?</a>
       </div>
+      <input id="password" name="password" type="password" required autocomplete="current-password" class="{{ auth.kv_auth_input }}">
     </div>
 
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.16)] md:p-8">
-      <form method="post" class="space-y-4">
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="email">E-post</label>
-          <input id="email" name="email" type="email" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
-        </div>
+    <button class="kv-btn kv-btn-lamp w-full">Logga in</button>
+  </form>
 
-        <div>
-          <label class="text-sm font-medium text-slate-700" for="password">L&ouml;senord</label>
-          <input id="password" name="password" type="password" required class="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm transition focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-pink-100">
-        </div>
-
-        <div class="flex justify-center">
-          <a href="{{ url_for('auth.forgot_password_form') }}" class="text-sm font-medium text-rose-500 transition hover:text-rose-600">
-            Gl&ouml;mt l&ouml;senord?
-          </a>
-        </div>
-
-        <button class="inline-flex w-full items-center justify-center rounded-2xl bg-pink-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-600">
-          Logga in
-        </button>
-      </form>
-    </div>
+  <div class="mt-10 max-w-[28rem] border-t border-[rgba(242,236,226,0.12)] pt-6 text-[#b9c2cf]">
+    <p>Inget konto än? <a class="kv-link text-[#f2ece2]" href="{{ url_for('auth.register_form') }}">Skapa konto</a></p>
+    <p class="mt-2 text-sm text-[#9aa6b8]">Du kan också boka direkt. Kontot skapas när du skickar din första bokning.</p>
   </div>
-</section>
+{% endcall %}
 {% endblock %}
