@@ -118,10 +118,10 @@
   <h2 id="kv-how-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Så går bokningen till</h2>
   <ol class="kv-steps mt-12 grid gap-10 md:mt-16 md:grid-cols-2 md:gap-x-8 md:gap-y-14 lg:grid-cols-4 lg:gap-y-10">
     {% set steps = [
-      ("Välj datum", "Du ser bara det som är ledigt just de dagarna, med pris för hela hyresperioden."),
+      ("Välj datum", "Du ser vad som är ledigt just de dagarna, med pris för hela hyresperioden."),
       ("Välj tält och tillbehör", "Lägg till bord, stolar och ljusslingor. Summan räknas ut medan du väljer."),
       ("Leverans och montering", "Välj om vi ska köra ut och bygga upp. Leveransen prissätts efter körsträckan."),
-      ("Vi bekräftar", "Bokningen är väntande tills vi har gått igenom den. Sedan får du besked."),
+      ("Vi går igenom bokningen", "Bokningen är väntande tills vi har gått igenom den. Sedan bekräftar vi den eller hör av oss."),
     ] %}
     {% for title, text in steps %}
       <li class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 md:block md:border-t md:border-[rgba(242,236,226,0.24)] md:pt-0">
@@ -164,7 +164,7 @@
     <div class="md:col-span-6">
       <h2 id="kv-delivery-title" class="kv-display text-[2.1rem] md:text-[2.75rem]">Vi kör ut och bygger upp</h2>
       <p class="mt-5 max-w-[48ch] text-lg leading-relaxed text-[#cfd6e0]">
-        Lägg till leverans i bokningen så räknar vi ut priset efter körsträckan till din adress. Väljer du montering bygger vi upp och tar ner tältet, och hjälper till med möbleringen.
+        Lägg till leverans i bokningen så räknar vi ut priset efter körsträckan till din adress. Väljer du montering bygger vi upp tältet och tar ner det efteråt.
       </p>
       <dl class="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
         <div>
